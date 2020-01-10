@@ -1,0 +1,228 @@
+baseURL = "https://www.enriqueareyan.com/"
+languageCode = "en-us"
+theme = "aafu"
+
+[params]
+    title = "Enrique Areyan"
+    author = "Enrique Areyan"
+    description = "EnriqueAreyan.com"
+    #copyright = "aaa"
+
+    [params.theme]
+        allowToggle = false
+        # Available themes are 'light', 'dark', and 'pinkish'
+        mainTheme = "light"
+        altTheme = "dark"
+        # setting false below will hide 'aafu by darshan' displayed under the profile pic
+        showAttribute = true
+
+    [params.favicons]
+        use = true
+        metas = '''
+        <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+        <link rel="manifest" href="site.webmanifest">
+        <link rel="mask-icon" href="safari-pinned-tab.svg" color="#252627">
+        <link rel="shortcut icon" href="favicon.ico">
+        '''
+
+    # Profile section
+    [params.profile]
+        name = "Enrique Areyan Viqueira"
+		#tagline = "Title"
+		#location = "Providence, RI"
+        photo = "profile.jpg"
+
+    # Section for links to social websites
+    [params.social]
+        title = "Links"
+
+        [[params.social.list]]
+            class = "fab"
+            icon = "fa-linkedin-in"
+            url = "https://www.linkedin.com/in/enrique-areyan-viqueira-14a79531/"
+            title = "LinkedIn"		
+        [[params.social.list]]
+            class = "fab"
+            icon = "fa-github"
+            url = "http://github.com/eareyan/"
+            title = "GitHub"
+        [[params.social.list]]
+            class = "ai"
+            icon = "ai-google-scholar"
+            url = "https://scholar.google.com/citations?user=2RVoX-YAAAAJ&hl=en&oi=ao"
+            title = "Google Scholar"
+        [[params.social.list]]
+            class = "fa"
+            icon = "fa-book"
+            url = "https://dblp.org/pers/hd/v/Viqueira:Enrique_Areyan"
+            title = "DBLP"
+		
+    #Specify what is showin in the Accordion
+    [[params.showInAccordion]]
+        item = "aboutme"
+        expand = true   # true for the section that is initially expanded
+    #[[params.showInAccordion]]
+    #    item = "experience"
+    [[params.showInAccordion]]
+        item = "publication"
+    [[params.showInAccordion]]
+        item = "teaching"
+    [[params.showInAccordion]]
+        item = "project"
+    [[params.showInAccordion]]
+        item = "presentations"
+    [[params.showInAccordion]]
+        item = "hobby"
+
+    [params.aboutme]
+        title = "About Me"
+        icon = "fas fa-user"
+        description = "I'm a Ph.D candidate in [Computer Science](http://cs.brown.edu/) at [Brown University](https://www.brown.edu/) focusing on developing machine learning techniques to solve problems in mechanism design and empirical game-theoretical analysis. I also design automated bidding agents for electronic markets. \n\n I am advised by Prof. [Amy Greenwald](https://cs.brown.edu/people/faculty/amy/). \n\n You can find my complete CV [here](CV_Enrique_Areyan.pdf). \n\n I used to maintain an older website with stuff previous to my Ph.D., you can chek it out [here](http://courses.enriqueareyan.com)."
+
+    # Experience section
+    [params.experience]
+        title = "Experiences"
+        icon = "fas fa-briefcase"
+
+        [[params.experience.list]]
+            position = "Job Title"
+            dates = "2019 - *Present*"
+            company = "Company Name"
+            details = "Printed from desktop. Sent [emails](#). Called people using telephone. Drank water from office cooler. Ate donuts on people's birthdays."
+        [[params.experience.list]]
+            position = "Job Title"
+            dates = "2018 - 2019"
+            link = "bla"
+            company = "Company Name"
+
+    # Education section
+    [params.teaching]
+        title = "Teaching"
+        icon = "fas fa-graduation-cap"
+        description = "This semester (Spring 2019), I am teaching [Introduction to Computation for the Humanities and Social Sciences](http://cs.brown.edu/courses/info/csci0030/) at Brown University. \n\n I am also usually involved in some capacity (lecturing, TAing, Lab support, etc.) in Brown's [CSCI1951-K Algorithmic Game Theory](http://cs.brown.edu/courses/info/csci1951-k/) class.  \n\n In the past, I have taught different Computer Science and Mathematics courses, both in my home country, Venezuela, and in the U.S. Click [here](http://courses.enriqueareyan.com) for more information about these past classes."
+
+    # Publication section
+    [params.publication]
+        title = "Publications"
+        icon = "fas fa-book"
+        #The order below determines the order in which the items appear in "Publications" section
+        format = ["title", "authors" , "journal", "date"]
+        #If you don't want to group publications, comment the line below by adding # at the beginning
+        types = ["Conference Articles", "Workshops", "Preprints"]
+
+        [[params.publication.list]]
+            title = "Empirical Mechanism Design: Designing Mechanisms from Data"
+            authors = "Enrique Areyan Viqueira, Cyrus Cousins, Yasser Mohammad, Amy Greenwald"
+            date = "2019"
+            journal = "Proceedings of the Thirty-Fifth Conference on Uncertainty in Artificial Intelligence, UAI"
+            link = "http://auai.org/uai2019/proceedings/papers/406.pdf"
+            type = "Conference Articles"
+
+        [[params.publication.list]]
+            title = "Learning Simulation-Based Games from Data"
+            authors = "Enrique Areyan Viqueira, Amy Greenwald, Cyrus Cousins, Eli Upfal"
+            date = "2019"
+            journal = "Proceedings of the 18th International Conference on Autonomous Agents and MultiAgent Systems, AAMAS"
+            link = "https://dl.acm.org/doi/10.5555/3306127.3331916"
+            type = "Conference Articles"
+
+        [[params.publication.list]]
+            title = "Supply Chain Management World - A Benchmark Environment for Situated Negotiations"
+            authors = "Yasser Mohammad, Enrique Areyan Viqueira, Nahum Alvarez Ayerza, Amy Greenwald, Shinji Nakadai, Satoshi Morinaga"
+            date = "2019"
+            journal = "Principles and Practice of Multi-Agent Systems - 22nd International Conference, PRIMA"
+            link = "https://link.springer.com/chapter/10.1007%2F978-3-030-33792-6_10"
+            type = "Conference Articles"
+
+        [[params.publication.list]]
+            title = "On Approximate Welfare- and Revenue-Maximizing Equilibria for Size-Interchangeable Bidders"
+            authors = "Enrique Areyan Viqueira, Amy Greenwald, Victor Naroditskiy"
+            date = "2017"
+            journal = "Proceedings of the 16th Conference on Autonomous Agents and MultiAgent Systems, AAMAS"
+            link = "https://dl.acm.org/doi/10.5555/3091125.3091331"
+            type = "Conference Articles"
+
+        [[params.publication.list]]
+            title = "Principled Autonomous Decision Making for Markets"
+            authors = "Enrique Areyan Viqueira"
+            date = "2017"
+            journal = "Proceedings of the 16th Conference on Autonomous Agents and MultiAgent Systems, AAMAS"
+            link = "https://dl.acm.org/doi/10.5555/3091125.3091477"
+            type = "Conference Articles"
+
+        [[params.publication.list]]
+            title = "Evaluating Assisted Emulation for Legacy Executables"
+            authors = "Swetha Toshniwal, Enrique Areyan Viqueira, Geoffrey Brown, Kevin Cornelius, Gavin Whelan"
+            date = "2012"
+            journal = "Proceedings of the 9th International Conference on Digital Preservation, iPRES"
+            link = "https://phaidra.univie.ac.at/view/o:293866"
+            type = "Conference Articles"
+
+        [[params.publication.list]]
+            title = "On Revenue-Maximizing Walrasian Equilibria for Size-Interchangeable Bidders"
+            authors = "Enrique Areyan Viqueira, Amy Greenwald, Victor Naroditskiy, Daniels Collins"
+            date = "2016"
+            journal = "Agent-Mediated Electronic Commerce. Designing Trading Strategies and Mechanisms for Electronic Markets, AMEC/TADA"
+            link = "https://link.springer.com/chapter/10.1007%2F978-3-319-54229-4_2"
+            type = "Workshops"
+
+        [[params.publication.list]]
+            title = "Learning Equilibria of Simulation-Based Games"
+            authors = "Enrique Areyan Viqueira, Cyrus Cousins, Eli Upfal, Amy Greenwald"
+            date = "2019"
+            journal = "arXiv"
+            link = "https://arxiv.org/abs/1905.13379"
+            type = "Preprints"          
+
+        [[params.publication.list]]
+            title = "On Approximate Welfare- and Revenue-Maximizing Equilibria for Size-Interchangeable Bidders"
+            authors = "Enrique Areyan Viqueira, Amy Greenwald, Victor Naroditskiy"
+            date = "2017"
+            journal = "arXiv"
+            link = "https://arxiv.org/abs/1708.03097"
+            type = "Preprints"          
+
+    # Project section
+    [params.project]
+        title = "Projects"
+        icon = "fas fa-project-diagram"
+
+        [[params.project.list]]
+            title = "Empirical Mechanism Design of the AdX Game"
+            url = "https://github.com/eareyan/emd-adx"
+            description = "A Python library that companion to [this paper](http://auai.org/uai2019/proceedings/papers/406.pdf)" 
+
+        [[params.project.list]]
+            title = "Implementation of the AdX Game"
+            url = "https://github.com/eareyan/adxgame"
+            description = "A JAVA library to play the Advertisement Exchange Game (AdX), a project of class [CSCI1951-K Algorithmic Game Theory](http://cs.brown.edu/courses/info/csci1951-k/)." 
+
+        [[params.project.list]]
+            title = "Envy-free Prices"
+            url = "https://github.com/eareyan/envy-free-prices"
+            description = "A flexible JAVA framework for Combinatorial Matching Markets."
+
+    # Presentations Section
+    [params.presentations]
+        title = "Presentations"
+        icon = "fa fa-comment"
+        [[params.presentations.list]]
+            title="Empirical Mechanism Design— Designing Mechanisms from Data"
+            url="presentations/INFORMS19_EMD.pdf"
+            description = "An invited talk I gave at the [2019 INFORMS Annual Conference](http://meetings2.informs.org/wordpress/seattle2019/) in Seattle, Washington, USA on October 20-23, 2019."
+
+    # Hobby section
+    [params.hobby]
+        title = "Hobbies"
+        icon = "fas fa-gamepad"
+		
+        [[params.hobby.list]]		
+		    hobby = "I am an avid consumer of Mathematical Content. I particularly enjoy Prof. Norman J Wildberger's YouTube channel [Insights into Mathematics](https://www.youtube.com/user/njwildberger), [3Blue1Brown](https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw), and [Numberphile](https://www.youtube.com/channel/UCoxcjq-8xIDTYp3uz647V5A)."
+
+        [[params.hobby.list]]
+            hobby = "I also like learning more about philosophy. I find Darin McNabb's YouTube Channel, [La Fonda Filos&oacute;fica](https://www.youtube.com/channel/UC6GbAKHWYUJDWlkxY6HPldg), specially helpful."
+        
+        [[params.hobby.list]]       
+            hobby = "I enjoy playing and watching f&uacute;tbol, particular [La Liga's](https://www.google.com/search?q=la+liga&oq=la+liga&aqs=chrome..69i57j0l7.813j0j7&sourceid=chrome&ie=UTF-8) games where either [Barcelona F.C.](https://www.google.com/search?sxsrf=ACYBGNQYCmFz0WShSHvxpSxCu9GwYYzFsg%3A1578623525078&ei=JeIXXtOyBKmk_Qawzb_IDA&q=barcelona+fc&oq=barcelona+&gs_l=psy-ab.3.0.35i39j0i131j0i131i67j0i67l2j0i131i67j0i67l3j0i131.21258.23703..24390...2.5..0.79.854.12......0....1..gws-wiz.......0i71j0j0i10i67.4P9s2iIA1tM) or [Real Madrid](https://www.google.com/search?sxsrf=ACYBGNSMzzF2PyS9UDMV57NgmCz-x_G6wA%3A1578623551225&ei=P-IXXtClDcfk_AaFjqfADQ&q=real+madrid&oq=real+madrid&gs_l=psy-ab.3..0i131j0i20i263j0i131j0i131i67j0i67j0i131l3j0i131i67j0i131.17814.19195..19324...0.4..0.75.778.11......0....1..gws-wiz.......0i71j35i39j0._XGRt3rZAc4&ved=0ahUKEwiQwYSA__fmAhVHMt8KHQXHCdgQ4dUDCAs&uact=5) play."
