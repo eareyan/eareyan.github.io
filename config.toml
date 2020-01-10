@@ -6,7 +6,7 @@ theme = "aafu"
     title = "Enrique Areyan"
     author = "Enrique Areyan"
     description = "EnriqueAreyan.com"
-    #copyright = "aaa"
+    copyright = ""
 
     [params.theme]
         allowToggle = false
@@ -14,7 +14,7 @@ theme = "aafu"
         mainTheme = "light"
         altTheme = "dark"
         # setting false below will hide 'aafu by darshan' displayed under the profile pic
-        showAttribute = true
+        showAttribute = false
 
     [params.favicons]
         use = true
