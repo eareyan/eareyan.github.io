@@ -113,6 +113,14 @@ theme = "aafu"
         types = ["Conference Articles", "Workshops", "Preprints"]
 
         [[params.publication.list]]
+            title = "Improved Algorithms for Learning Equilibria in Simulation-Based Games"
+            authors = "Enrique Areyan Viqueira, Cyrus Cousins, Amy Greenwald"
+            date = "2020"
+            journal = "Proceedings of the 19th International Conference on Autonomous Agents and MultiAgent Systems, AAMAS (forthcoming)"
+            #link = "?"
+            type = "Conference Articles"
+
+        [[params.publication.list]]
             title = "Empirical Mechanism Design: Designing Mechanisms from Data"
             authors = "Enrique Areyan Viqueira, Cyrus Cousins, Yasser Mohammad, Amy Greenwald"
             date = "2019"
