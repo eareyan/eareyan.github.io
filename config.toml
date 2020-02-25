@@ -79,7 +79,7 @@ theme = "aafu"
     [params.aboutme]
         title = "About Me"
         icon = "fas fa-user"
-        description = "I'm a Ph.D candidate in [Computer Science](http://cs.brown.edu/) at [Brown University](https://www.brown.edu/) focusing on developing machine learning techniques to solve problems in mechanism design and empirical game-theoretical analysis. I also design automated bidding agents for electronic markets. \n\n I am advised by Prof. [Amy Greenwald](https://cs.brown.edu/people/faculty/amy/). \n\n You can find my complete CV [here](CV_Enrique_Areyan.pdf). \n\n I used to maintain an older website with stuff previous to my Ph.D., you can chek it out [here](http://courses.enriqueareyan.com)."
+        description = "I'm a Ph.D candidate in [Computer Science](http://cs.brown.edu/) at [Brown University](https://www.brown.edu/) focusing on developing machine learning techniques to solve problems in mechanism design and empirical game-theoretical analysis. I also design automated bidding agents for electronic markets. \n\n I am advised by Prof. [Amy Greenwald](https://cs.brown.edu/people/faculty/amy/). \n\n You can find my complete CV [here](CV_Enrique_Areyan.pdf). \n\n In 2019, we participated in the Tenth International Automated Negotiating Agents Competition, specifically in the Supply Chain Management League. We placed second!, read more about it [here](https://cs.brown.edu/news/2020/02/25/areyan-takes-second-place-international-automated-negotiation-agents-competition/). \n\n I used to maintain an older website with stuff previous to my Ph.D., you can chek it out [here](http://courses.enriqueareyan.com)."
 
     # Experience section
     [params.experience]
