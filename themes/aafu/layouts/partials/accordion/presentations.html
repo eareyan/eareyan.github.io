@@ -1,0 +1,12 @@
+<dl>
+  {{ range.Site.Params.presentations.list }}
+  <dt style="margin-top:1em">
+    <a href="{{ .url }}" style="font-variant: small-caps; ">
+      {{- .title -}}
+    </a>
+  </dt>
+  <dd class="mb-0 ml-3 markdownify">
+    {{- .description | markdownify -}}
+  </dd>
+  {{ end }}
+</dl>
