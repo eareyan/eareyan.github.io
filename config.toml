@@ -1,6 +1,7 @@
 baseURL = "https://www.enriqueareyan.com/"
 languageCode = "en-us"
 theme = "aafu"
+googleAnalytics="UA-27554853-1"
 
 [params]
     title = "Enrique Areyan"
