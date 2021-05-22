@@ -67,6 +67,8 @@ googleAnalytics="UA-27554853-1"
     #[[params.showInAccordion]]
     #    item = "experience"
     [[params.showInAccordion]]
+        item = "news"
+    [[params.showInAccordion]]
         item = "publication"
     [[params.showInAccordion]]
         item = "teaching"
@@ -80,7 +82,14 @@ googleAnalytics="UA-27554853-1"
     [params.aboutme]
         title = "About Me"
         icon = "fas fa-user"
-        description = "I'm a Ph.D candidate in [Computer Science](http://cs.brown.edu/) at [Brown University](https://www.brown.edu/) focusing on developing machine learning techniques to solve problems in mechanism design and empirical game-theoretical analysis. I also design automated bidding agents for electronic markets. \n\n I am advised by Prof. [Amy Greenwald](https://cs.brown.edu/people/faculty/amy/). \n\n You can find my complete CV [here](CV_Enrique_Areyan.pdf). \n\n In 2019, we participated in the Tenth International Automated Negotiating Agents Competition, specifically in the Supply Chain Management League. We placed second!, read more about it [here](https://cs.brown.edu/news/2020/02/25/areyan-takes-second-place-international-automated-negotiation-agents-competition/). \n\n I used to maintain an older website with stuff previous to my Ph.D., you can chek it out [here](http://courses.enriqueareyan.com)."
+        description = "I am a recent Ph.D. graduate of [Computer Science](http://cs.brown.edu/) at [Brown University](https://www.brown.edu/), advised by Prof. [Amy Greenwald](https://cs.brown.edu/people/faculty/amy/) as part of the [E-GLAMOR](http://glamor.cs.brown.edu/) Lab. \n\n My research focuses on developing machine learning techniques to solve problems in mechanism design and empirical game-theoretical analysis. I also design automated bidding agents for electronic markets. \n\n You can find my complete CV [here](CV_Enrique_Areyan.pdf). I used to maintain an older website with stuff previous to my Ph.D.; you can check it [here](http://courses.enriqueareyan.com). "
+
+    # News section
+    [params.news]
+        title = "News"
+        icon = "fas fa-newspaper"
+        description = "**May 17, 2021:** I am ecstatic to start a summer internship with the marketplace design team at [Pinterest!](http://www.pinterest.com) \n\n **May 6, 2021:** I have a [poster](presentations/Enrique_AreyanViqueira_AAMAS21_NCM_Poster.pdf) at the 20th Autonomous Agents and Multiagent Systems ([AAMAS 2021](https://aamas2021.soton.ac.uk/)), and I am also a volunteer at the conference. \n\n **March 12, 2021:** I successfully defended my doctoral thesis! Here is the [presentation](presentations/Enrique_AreyanViqueira_PhD_Thesis_Defense_Presentation_2021.pdf). Thank you all! \n\n  **January 15, 2021:** we participated in the Supply Chain Management League of the Eleventh International Automated Negotiating Agents Competition. [We qualified for the final round](https://scml.cs.brown.edu/)! The event took place at the 29th International Joint Conference on Artificial Intelligence and the 17th Pacific Rim International Conference on Artificial Intelligence ([IJCAI-PRICAI 2020](https://ijcai20.org/)). \n\n **December 17, 2020:** I am presenting my work on [Automated Negotiation for Supply Chain Management](presentations/Enrique_AreyanViqueira_AutomatedNegotiation_2020.pdf) at [Rollins College](https://www.rollins.edu/). \n\n **June 1, 2020:** I successfully defended my doctoral thesis proposal! Here is the [presentation](presentations/Enrique_AreyanViqueira_PhD_Thesis_Proposal_Presentation_2020.pdf). \n\n **August 15, 2019:** we participated in the Supply Chain Management League of the Tenth International Automated Negotiating Agents Competition. [We placed second](http://web.tuat.ac.jp/~katfuji/ANAC2019/)! The event took place at the 28th International Joint Conference on Artificial Intelligence ([IJCAI19](https://www.ijcai19.org/)). You can read more about it [here](https://cs.brown.edu/news/2020/02/25/areyan-takes-second-place-international-automated-negotiation-agents-competition/). \n\n **July 22, 2019:** I am attending the Uncertainty in Artificial Intelligence Conference ([UAI19](http://auai.org/uai2019/)) to present my work on empirical mechanism design. Here is the [paper](http://auai.org/uai2019/proceedings/papers/406.pdf) and the [code repo](https://github.com/eareyan/emd-adx). \n\n **June 25, 2019:** I have a [poster](presentations/Enrique_AreyanViqueira_AAMAS19_LearningEquilibria_Poster.pdf) at the 20th ACM conference on Economics and Computation ([ACM EC '19](https://www.sigecom.org/ec19/)).  \n\n **June 10, 2019:** I am back at [Amazon](https://www.amazon.com), this time for a Research Scientist summer internship with the [Sponsored Products](https://advertising.amazon.com/solutions/products/sponsored-products) team. \n\n **May 13, 2019:** I am attending the 18th International Conference on Autonomous Agents and Multiagent Systems ([AAMAS19](http://aamas2019.encs.concordia.ca/)) to present my work on learning equilibria of simulation-based games. Here is the [poster](presentations/Enrique_AreyanViqueira_AAMAS19_LearningEquilibria_Poster.pdf), the [paper](http://www.ifaamas.org/Proceedings/aamas2019/pdfs/p1778.pdf), and the [code repo](https://github.com/eareyan/pysegta). \n\n **October 9, 2018:** I am visiting the National Institute of Advanced Industrial Science and Technology ([AIST](https://www.aist.go.jp/index_en.html)) as an invited researcher to work on automated negotiation problems! Excited to live in Tokyo, Japan, for the 2018-2019 academic year! \n\n **June 5, 2018:** I am back at [Amazon](https://www.amazon.com), this time for an Applied Research Scientist summer  internship with the Sponsored Brands teams. \n\n **May 31, 2017:** I am thrilled to start a Research Scientist summer internship with the Adaptive Buying team at [Amazon](https://www.amazon.com). \n\n **May 17, 2017:** I am attending the 16th International Conference on Autonomous Agents and Multiagent Systems ([AAMAS17](http://www.ifaamas.org/AAMAS/aamas2017/)) to present my work on revenue-maximizing equilibria for ad auction bidders. Here is the [poster](presentations/Enrique_AreyanViqueira_AAMAS17_WE_Poster.pdf), the [paper](http://www.ifaamas.org/AAMAS/aamas2017/proceedings/pdfs/p1466.pdf), and the [code repo](https://github.com/eareyan/envy-free-prices). I also presented at the Doctoral Consortium my views on [Principled Autonomous Decision Making for Markets](http://www.ifaamas.org/AAMAS/aamas2017/proceedings/pdfs/p1869.pdf). I am also a volunteer at the conference."
+
 
     # Experience section
     [params.experience]
@@ -102,7 +111,7 @@ googleAnalytics="UA-27554853-1"
     [params.teaching]
         title = "Teaching"
         icon = "fas fa-graduation-cap"
-        description = "This semester (Fall 2020), I am co-teaching [Artificial Intelligence](https://cs.brown.edu/courses/csci1410/) at Brown University. \n\n Last semester (Spring 2020), I taught [Introduction to Computation for the Humanities and Social Sciences](http://cs.brown.edu/courses/csci0030/) at Brown University. \n\n I am also usually involved in some capacity (lecturing, TAing, Lab support, etc.) in Brown's [Algorithmic Game Theory](http://cs.brown.edu/courses/cs1951k/) class.  \n\n In the past, I have taught different Computer Science and Mathematics courses, both in my home country, Venezuela, and in the U.S. Click [here](http://courses.enriqueareyan.com) for more information about these past classes."
+        description = "Fall 2020, I was a co-instructor for [Artificial Intelligence](https://cs.brown.edu/courses/csci1410/) at Brown University. \n\n Spring 2020, I taught [Introduction to Computation for the Humanities and Social Sciences](http://cs.brown.edu/courses/csci0030/) at Brown University. \n\n During my Ph.D., I was usually involved in some capacity (lecturing, TAing, Lab support, etc.) in Brown's [Algorithmic Game Theory](http://cs.brown.edu/courses/info/csci1440/) class.  \n\n In the past, I have taught different Computer Science and Mathematics courses, both in my home country, Venezuela, and in the U.S. Click [here](http://courses.enriqueareyan.com) for more information about these past classes."
 
     # Publication section
     [params.publication]
@@ -112,6 +121,14 @@ googleAnalytics="UA-27554853-1"
         format = ["title", "authors" , "journal", "date"]
         #If you don't want to group publications, comment the line below by adding # at the beginning
         types = ["Conference Articles", "Workshops", "Preprints"]
+
+        [[params.publication.list]]
+            title = "Learning Competitive Equilibria in Noisy Combinatorial Markets"
+            authors = "Enrique Areyan Viqueira, Cyrus Cousins, Amy Greenwald"
+            date = "2021"
+            journal = "Proceedings of the 20th International Conference on Autonomous Agents and MultiAgent Systems, AAMAS"
+            link = "https://dl.acm.org/doi/abs/10.5555/3463952.3464120"
+            type = "Conference Articles"
 
         [[params.publication.list]]
             title = "Improved Algorithms for Learning Equilibria in Simulation-Based Games"
@@ -186,6 +203,14 @@ googleAnalytics="UA-27554853-1"
             type = "Workshops"
 
         [[params.publication.list]]
+            title = "Learning Competitive Equilibria in Noisy Combinatorial Markets."
+            authors = "Enrique Areyan Viqueira, Cyrus Cousins, Amy Greenwald"
+            date = "2021"
+            journal = "arXiv"
+            link = "https://arxiv.org/pdf/2101.09551.pdf"
+            type = "Preprints"            
+
+        [[params.publication.list]]
             title = "Learning Equilibria of Simulation-Based Games"
             authors = "Enrique Areyan Viqueira, Cyrus Cousins, Eli Upfal, Amy Greenwald"
             date = "2019"
@@ -209,12 +234,12 @@ googleAnalytics="UA-27554853-1"
         [[params.project.list]]
             title = "Empirical Mechanism Design of the AdX Game"
             url = "https://github.com/eareyan/emd-adx"
-            description = "A Python library that companion to [this paper](http://proceedings.mlr.press/v115/viqueira20a/viqueira20a.pdf)" 
+            description = "A Python library that companion to [this paper](http://proceedings.mlr.press/v115/viqueira20a/viqueira20a.pdf)." 
 
         [[params.project.list]]
             title = "Implementation of the AdX Game"
             url = "https://github.com/eareyan/adxgame"
-            description = "A JAVA library to play the Advertisement Exchange Game (AdX), a project of class [Algorithmic Game Theory](http://cs.brown.edu/courses/cs1951k/)." 
+            description = "A JAVA library to play the Advertisement Exchange Game (AdX), a project of class [Algorithmic Game Theory](http://cs.brown.edu/courses/info/csci1440/)." 
 
         [[params.project.list]]
             title = "Envy-free Prices"
@@ -227,6 +252,16 @@ googleAnalytics="UA-27554853-1"
         icon = "fa fa-comment"
         
         [[params.presentations.list]]
+            title="Learning Equilibria of Simulation-Based Games: Applications to Empirical Mechanism Design"
+            url="presentations/Enrique_AreyanViqueira_PhD_Thesis_Defense_Presentation_2021.pdf"
+            description = "My doctoral thesis defense presentation delivered online on March 12, 2021."
+
+        [[params.presentations.list]]
+            title="Automated Negotiation in Supply Chain Management"
+            url="presentations/Enrique_AreyanViqueira_AutomatedNegotiation_2020.pdf"
+            description = "An invited talk I gave at [Rollins College](https://www.rollins.edu/) in Orlando, Florida, USA on December 17, 2020."
+
+        [[params.presentations.list]]
             title="Improved Algorithms for Learning Equilibria in Simulation-Based Games"
             url="https://underline.io/lecture/332-learning-equilibria-of-simulation-based-games"
             description = "Presentation at the [19th International Conference on Autonomous Agents and MultiAgent Systems, AAMAS](https://aamas2020.conference.auckland.ac.nz/) May 11, 2020 • Live on Underline."
@@ -238,7 +273,7 @@ googleAnalytics="UA-27554853-1"
         
         [[params.presentations.list]]
             title="Empirical Mechanism Design— Designing Mechanisms from Data"
-            url="presentations/INFORMS19_EMD.pdf"
+            url="presentations/Enrique_AreyanViqueira_INFORMS19_EMD.pdf"
             description = "An invited talk I gave at the [2019 INFORMS Annual Conference](http://meetings2.informs.org/wordpress/seattle2019/) in Seattle, Washington, USA on October 20-23, 2019."
 
     # Hobby section
@@ -250,7 +285,7 @@ googleAnalytics="UA-27554853-1"
             hobby = "I am an avid consumer of Mathematical Content. I particularly enjoy Prof. Norman J Wildberger's YouTube channel [Insights into Mathematics](https://www.youtube.com/user/njwildberger), [3Blue1Brown](https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw), and [Numberphile](https://www.youtube.com/channel/UCoxcjq-8xIDTYp3uz647V5A)."
 
         [[params.hobby.list]]
-            hobby = "I also like learning more about philosophy. I find Darin McNabb's YouTube Channel, [La Fonda Filos&oacute;fica](https://www.youtube.com/channel/UC6GbAKHWYUJDWlkxY6HPldg), specially helpful."
+            hobby = "I also like learning more about philosophy. I find Darin McNabb's YouTube Channel, [La Fonda Filos&oacute;fica](https://www.youtube.com/channel/UC6GbAKHWYUJDWlkxY6HPldg), especially helpful."
         
         [[params.hobby.list]]       
-            hobby = "I enjoy playing and watching f&uacute;tbol, particular [La Liga's](https://www.google.com/search?q=la+liga&oq=la+liga&aqs=chrome..69i57j0l7.813j0j7&sourceid=chrome&ie=UTF-8) games where either [Barcelona F.C.](https://www.google.com/search?sxsrf=ACYBGNQYCmFz0WShSHvxpSxCu9GwYYzFsg%3A1578623525078&ei=JeIXXtOyBKmk_Qawzb_IDA&q=barcelona+fc&oq=barcelona+&gs_l=psy-ab.3.0.35i39j0i131j0i131i67j0i67l2j0i131i67j0i67l3j0i131.21258.23703..24390...2.5..0.79.854.12......0....1..gws-wiz.......0i71j0j0i10i67.4P9s2iIA1tM) or [Real Madrid](https://www.google.com/search?sxsrf=ACYBGNSMzzF2PyS9UDMV57NgmCz-x_G6wA%3A1578623551225&ei=P-IXXtClDcfk_AaFjqfADQ&q=real+madrid&oq=real+madrid&gs_l=psy-ab.3..0i131j0i20i263j0i131j0i131i67j0i67j0i131l3j0i131i67j0i131.17814.19195..19324...0.4..0.75.778.11......0....1..gws-wiz.......0i71j35i39j0._XGRt3rZAc4&ved=0ahUKEwiQwYSA__fmAhVHMt8KHQXHCdgQ4dUDCAs&uact=5) play."
+            hobby = "I enjoy playing and watching f&uacute;tbol, particularly [La Liga's](https://www.google.com/search?q=la+liga&oq=la+liga&aqs=chrome..69i57j0l7.813j0j7&sourceid=chrome&ie=UTF-8) games where [Barcelona F.C.](https://www.google.com/search?sxsrf=ACYBGNQYCmFz0WShSHvxpSxCu9GwYYzFsg%3A1578623525078&ei=JeIXXtOyBKmk_Qawzb_IDA&q=barcelona+fc&oq=barcelona+&gs_l=psy-ab.3.0.35i39j0i131j0i131i67j0i67l2j0i131i67j0i67l3j0i131.21258.23703..24390...2.5..0.79.854.12......0....1..gws-wiz.......0i71j0j0i10i67.4P9s2iIA1tM) or [Real Madrid](https://www.google.com/search?sxsrf=ACYBGNSMzzF2PyS9UDMV57NgmCz-x_G6wA%3A1578623551225&ei=P-IXXtClDcfk_AaFjqfADQ&q=real+madrid&oq=real+madrid&gs_l=psy-ab.3..0i131j0i20i263j0i131j0i131i67j0i67j0i131l3j0i131i67j0i131.17814.19195..19324...0.4..0.75.778.11......0....1..gws-wiz.......0i71j35i39j0._XGRt3rZAc4&ved=0ahUKEwiQwYSA__fmAhVHMt8KHQXHCdgQ4dUDCAs&uact=5) play."
