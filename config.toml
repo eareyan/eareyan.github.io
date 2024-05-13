@@ -82,7 +82,7 @@ googleAnalytics="UA-27554853-1"
     [params.aboutme]
         title = "About Me"
         icon = "fas fa-user"
-        description = "I am a Software Engineer at [Google](https://google.com/). \n\n I am also a Ph.D. graduate of [Computer Science](http://cs.brown.edu/) at [Brown University](https://www.brown.edu/), advised by Prof. [Amy Greenwald](https://cs.brown.edu/people/faculty/amy/) as part of the [E-GLAMOR](http://glamor.cs.brown.edu/) Lab. \n\n My research focuses on developing machine learning techniques to solve problems in mechanism design and empirical game-theoretical analysis. I also design automated bidding agents for electronic markets. \n\n You can find my complete CV [here](CV_Enrique_Areyan.pdf). I used to maintain an older website with stuff previous to my Ph.D.; you can check it [here](http://courses.enriqueareyan.com). "
+        description = "I am a Software Engineer at [Google](https://google.com/). \n\n I am also a Ph.D. graduate of [Computer Science](http://cs.brown.edu/) at [Brown University](https://www.brown.edu/), advised by Prof. [Amy Greenwald](https://cs.brown.edu/people/faculty/amy/) as part of the [E-GLAMOR](http://glamor.cs.brown.edu/) Lab. \n\n My research focuses on developing machine learning techniques to solve problems in mechanism design and empirical game-theoretical analysis. I also design automated bidding agents for electronic markets. \n\n You can find my complete CV [here](CV_Enrique_Areyan.pdf). I used to maintain an older website with stuff previous to my Ph.D.; you can check it [here](https://www.enriqueareyan.com/courses). "
 
     # News section
     [params.news]
