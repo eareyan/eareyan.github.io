@@ -1,0 +1,215 @@
+<html>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab6.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:23 GMT -->
+<head><title>Lab 6 - P542 Hardware System Design II - enriqueareyan.com</title></head>
+<body>
+      <h1>Lab 6</h1>
+      <h1>Overview</h1>
+<p>In this lab, you are going to write a driver and integrate an open source <span class="caps">FAT</span> file system implementation. This will allow the <span class="caps">STM</span> to read and write files on an SD card inserted on the back side of the <span class="caps">LCD</span> display. The embedded <span class="caps">FAT</span> file system (<span class="caps">FATFS</span>) implementation is hosted at <a href="http://elm-chan.org/fsw/ff/00index_e.html">http://elm-chan.org</a>.</p>
+<p>The <span class="caps">FATFS</span> is written to be used across a wide set of processors. The task of creating helper functions that can read and write the SD card (<span class="caps">SPI</span> device) is left to system developer. In addition to the read/write function, we will also need to create a function that can deliver the time/date in a specific format along with a precise delay function.</p>
+<h2>
+<span class="caps">SPI</span> Initialization</h2>
+<p>We will be using the SPI2 peripheral to connect to the SD card. Recall that we used the SPI1 peripheral in <a href="Lab3.html">Lab 3</a> to connect the gyroscope. The initialization of SPI2 will follow this model closely. Here are the pin assignments.</p>
+<table>
+<tr>
+<th>Pin</th>
+		<th>Function</th>
+	</tr>
+<tr>
+<td>PB13</td>
+		<td><span class="caps">SCK</span></td>
+	</tr>
+<tr>
+<td>PB14</td>
+		<td><span class="caps">MISO</span></td>
+	</tr>
+<tr>
+<td>PB15</td>
+		<td><span class="caps">MOSI</span></td>
+	</tr>
+<tr>
+<td>PC0</td>
+		<td>SD_CS</td>
+	</tr>
+</table><h3>ds_sdcard.c: void ds_sdcard_interface_init(void)</h3>
+<p>Use the <span class="caps">SPI</span> initialization that you created in Lab 3 as a reference. For this lab, we are going to prescale the clock to the SD card. In later labs, we will improve the speed of this device. To change the prescalar, make the following adjustment to the <span class="caps">SPI</span> Initialization structure.</p>
+<pre><code>SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_64;</code></pre>
+<p>For the chip select pin, it is useful to have macros in the include file that mirror what was done for the gyro.</p>
+<pre><code>#define SD_CS_LOW()   GPIO_ResetBits(GPIOC, GPIO_Pin_0);
+#define SD_CS_HIGH()  GPIO_SetBits(GPIOC, GPIO_Pin_0);</code></pre>
+<h3>Wiring</h3>
+<p>The <span class="caps">LCD</span> on the top left of your board includes two <span class="caps">SPI</span> devices (<span class="caps">LCD</span>, SD Card). These devices have separate chip selects. Wire between the <span class="caps">SCK</span>, <span class="caps">MISO</span>, <span class="caps">MOSI</span>, and SD_CS to the corresponding pins on the STM32.</p>
+<h2>Helper Functions</h2>
+<p>To allow the <span class="caps">FATFS</span> code to operate on this system, we need to provide functions that communicate with the hardware unique to this system.</p>
+<h3>ds_sdcard.c: void ds_sdcard_readwrite(uint8_t *rxbuf, uint8_t *txbuf, int count)</h3>
+<p>Interactions with the SD card will routinely involve reading and writing buffers of data. This function passes pointers to buffers and the number of bytes. If a null pointer is passed for the rxbuf, then the data received can be discarded. If a null pointer is passed for the txbuf, then the data that is transmitter will be 0xFF which is considered an idle line.</p>
+<ul>
+<li>Function Declaration</li>
+</ul><pre><code>void ds_sdcard_readwrite(uint8_t *rxbuf, uint8_t *txbuf, int count) {</code></pre>
+<ul>
+<li>Loop over the byte count</li>
+</ul><pre><code>for (index=0;index&lt;count;index++) {</code></pre>
+<ul>
+<li>Transmit Section</li>
+</ul><pre><code>if (txbuf) {
+   SPI_SendData8(SPI2, *txbuf++);
+ }
+ else {
+   SPI_SendData8(SPI2, 0xFF);
+ }</code></pre>
+<ul>
+<li>Polling to make sure that the data transaction is complete</li>
+</ul><pre><code>while(SPI_I2S_GetFlagStatus(SPI2,SPI_I2S_FLAG_RXNE) == RESET);</code></pre>
+<ul>
+<li>Receive Section</li>
+</ul><pre><code>if (rxbuf) {
+   *rxbuf++ = (uint8_t) SPI_ReceiveData8(SPI2);
+ }
+ else {
+   SPI_ReceiveData8(SPI2);      
+ }</code></pre>
+<ul>
+<li>Entire Function</li>
+</ul><pre><code>void ds_sdcard_readwrite(uint8_t *rxbuf, uint8_t *txbuf, int count) {
+  int index;
+  for (index=0;index&lt;count;index++) {
+    if (txbuf) {
+      SPI_SendData8(SPI2, *txbuf++);
+    }
+    else {
+      SPI_SendData8(SPI2, 0xFF);
+    }
+    while(SPI_I2S_GetFlagStatus(SPI2,SPI_I2S_FLAG_RXNE) == RESET);
+    if (rxbuf) {
+      *rxbuf++ = (uint8_t) SPI_ReceiveData8(SPI2);
+    }
+    else {
+      SPI_ReceiveData8(SPI2);      
+    }
+  }
+}</code></pre>
+<h3>ds_sdcard.c: uint32_t get_fattime(void)</h3>
+<p>Because time/date can be handled in a variety of ways on embedded systems, the file system requires a helper function to provide this information. The information will be returned from this function in a packed 32-bit unsigned int. Use the data from the real-time clock to create this output int in the following format:</p>
+<pre><code>// Return a packed 32-bit word 
+// bit31:25 Year from 1980 (0..127)
+// bit24:21 Month (1..12)
+// bit20:16 Day in month(1..31)
+// bit15:11 Hour (0..23)
+// bit10:5 Minute (0..59)
+// bit4:0 Second / 2 (0..29)</code></pre>
+<h3>ds_delay.c: void ds_delay_init(void)</h3>
+<p>The SD card requires some specific delays during initialization. To generate precise delays, we will dedicate <span class="caps">TIMER</span> 3 to this function. In this implementation, we will use an output compare that counts up from 0 to a value that represents the number of uS specified as an argument to the function. Because this function is blocking, we will poll for the completion of the compare rather than using an interrupt.</p>
+<pre><code>TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+TIM_OCInitTypeDef  TIM_OCInitStructure;
+uint16_t PrescalerValue = 0;
+RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+PrescalerValue = (uint16_t) ((SystemCoreClock) / 36000000) - 1;
+TIM_TimeBaseStructure.TIM_Period = 65535;
+TIM_TimeBaseStructure.TIM_Prescaler = 0;
+TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+TIM_TimeBaseInit(TIM3, &amp;TIM_TimeBaseStructure);
+TIM_PrescalerConfig(TIM3, PrescalerValue, TIM_PSCReloadMode_Immediate);
+TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_Timing;
+TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+TIM_OCInitStructure.TIM_Pulse = 36000; 
+TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+TIM_OC1Init(TIM3, &amp;TIM_OCInitStructure);
+TIM_OC1PreloadConfig(TIM3, TIM_OCPreload_Disable);
+TIM_Cmd(TIM3, ENABLE);</code></pre>
+<h3>ds_delay.c: void ds_delay_uS(uint16_t uS_count)</h3>
+<p>This function will generate a programmable delay from 2uS-1000uS. After confirming that the timer is off, the counter is reset to 0 and the compare register is loaded with the scaled version of the desired count. The counter is started and the status flag is polled for completion. Once the counter reaches the value, the flag can be cleared.</p>
+<pre><code>if (uS_count &gt;= 1000) {
+  uS_count = 1000;
+}
+uS_count *= 36; 
+TIM_Cmd(TIM3, DISABLE);
+TIM_SetCounter(TIM3,0);
+TIM_SetCompare1(TIM3,uS_count);
+TIM_Cmd(TIM3, ENABLE);  
+while (TIM_GetFlagStatus(TIM3,TIM_FLAG_CC1)==RESET);
+TIM_ClearFlag(TIM3,TIM_FLAG_CC1);
+TIM_Cmd(TIM3, DISABLE);  </code></pre>
+<h2>
+<span class="caps">FATFS</span> Files</h2>
+<p>The <span class="caps">FATFS</span> files are include in the ./ff9b/src directory. The two files that will be relevant for this lab are the following:</p>
+<ul>
+<li>ff.c: File system main module</li>
+	<li>mmcbb.c: Stub functions that facilitate integration with the hardware specific low level drivers.</li>
+</ul><p>You will need to modify the following functions within the mmcbb file:</p>
+<ul>
+<li><strong>xmit_mmc</strong></li>
+</ul><pre><code>static void xmit_mmc (const BYTE* buff, UINT bc) {
+  // buff: pointer to data buffer to send 
+  // bc: byte count of data in the tranmit buffer
+  ds_sdcard_readwrite(0,(uint8_t *)buff,bc);
+}</code></pre>
+<ul>
+<li><strong>rcvr_mmc</strong></li>
+</ul><pre><code>static void rcvr_mmc (BYTE *buff, UINT bc) {
+  // buff: pointer to the receive buffer
+  // bc: byte count of data in the receive buffer
+  ds_sdcard_readwrite(buff,0,bc);
+}</code></pre>
+<ul>
+<li><strong>disk_initialize</strong></li>
+</ul><pre><code>DSTATUS disk_initialize (BYTE pdrv) {
+  BYTE n, ty, cmd, buf[4];
+  UINT tmr;
+  DSTATUS s;
+  if (pdrv) return RES_NOTRDY;
+  ds_sdcard_interface_init();
+  ...</code></pre>
+<h2>Testing the system:</h2>
+<p>To test the file system, you will use a test routine include with the generic example code included with the ff9b package.</p>
+<ul>
+<li>./ff9b/generic/main.c: This file contains a main function with an example file system usage. The code  reads a file named <span class="caps">MESSAGE</span>.<span class="caps">TXT</span> from the SD card and writes a file called "<span class="caps">HELLO</span>.<span class="caps">TXT</span>".
+	<ul>
+<li>Cut the main function code and integrate it into your lab 6 main code.</li>
+		<li>Make sure to include the function "die" which captures the status when things don't happen correctly. You can decode the result status using ff9b/src/ff.h.</li>
+		<li>Do not include their get_fattime() code. This implementation produces a static time/date stamp. Because we have a real-time clock, our function can produce a stamp based on current data.</li>
+		<li>Remove your card from the <span class="caps">LCD</span> and use the provided microSD card adapter to mount the disk on your workstation. Add the file <span class="caps">MESSAGE</span>.<span class="caps">TXT</span> on the card.</li>
+		<li>The test program will produce the following output when it completes successfully.</li>
+	</ul>
+</li>
+</ul><pre><code>Open an existing file (message.txt).
+Type the file content.
+Data added to the file from the workstation !!!!
+Close the file.
+Create a new file (hello.txt).
+Write a text data. (Hello world!)
+14 bytes written.
+Close the file.
+Open root directory.
+Directory listing...
+      14  HELLO.TXT
+      26  MESSAGE.TXT
+Test completed.</code></pre>
+<h2>Assignment</h2>
+<ul>
+<li>In Lab 5 you generated 1Hz output to the terminal in the format below. In this lab, you will write this same data to the SD card as well. Collect data for 5 minutes in a file called sensor.log.
+	<ul>
+<li><strong>02/08/2013,HH:MM:SS,gyro_x,gyro_y,gyro_z,accel_x,accel_y, accel_z,mag_x,mag_y,mag_z</strong></li>
+	</ul>
+</li>
+</ul><h2>What to Turn in:</h2>
+<p>This assignment is due by midnight on <b>2/21</b>. At midnight, your AI will pull the current state of your repository to review your code. In the following lab session, you will be asked to demonstrate your solution. Independently, you will also write a lab report describing in approximately 300 words or less the following:</p>
+<ul>
+<li>Description of your solution.</li>
+	<li>Description of issues that you encountered in developing your solution.</li>
+	<li>Appended sensor.log data.</li>
+	<li>Technical profile for your system. We will cover the format of the technical profile on Monday 2/18.</li>
+</ul><p>You will turn in this lab report in the oncourse assignments section.</p>
+    </div>
+  </div>
+  </div>
+
+</div>
+<div id="gollum-footer">
+  <p id="last-edit">
+    Last edited by bhimebau, <time class="js-relative-date" datetime="2013-02-20T15:28:45-05:00" title="2013-02-20 15:28:45">February 20, 2013</time>
+  </p>
+</body>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab6.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:23 GMT -->
+</html>   

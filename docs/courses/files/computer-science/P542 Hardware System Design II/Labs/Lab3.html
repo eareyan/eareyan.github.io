@@ -1,0 +1,163 @@
+<html>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab3.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:21 GMT -->
+<head><title>Lab 3 - P542 Hardware System Design II - enriqueareyan.com</title></head>
+<body>
+      <h1>Lab 3</h1>
+      <h2>Overview</h2>
+<p>In this lab, you will be developing a driver for the <a href="http://www.st.com/internet/com/TECHNICAL_RESOURCES/TECHNICAL_LITERATURE/DATASHEET/DM00036465.pdf">ST L3GD20 3-Axis Gyroscope</a>. To communicate with this device, you will be using serial peripheral interface (<span class="caps">SPI</span>). Once communication is established, you will develop initialization code so that data from each axis can be read.</p>
+<h2>SPI1</h2>
+<p>Performing the initialization on SPI1 follows the pattern that was used in lab1 for the <span class="caps">UART</span>. In this section of the lab, you will create <b>void ds_gyro_interface_init(void)</b> which will be called from <b>void ds_gyro_init(void)</b>.</p>
+<ul>
+<li>
+<b>Clocks</b> Enable the necessary clocks for the dio pins and SPI1. The SPI1 clock can be enabled using:</li>
+</ul><pre><code>RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1 , ENABLE);</code></pre>
+<ul>
+<li>
+<b>SPI1 Pins:</b> Identify the <span class="caps">MOSI</span>, <span class="caps">MISO</span>, <span class="caps">SCK</span> from the schematic. Setup these pins to be alternate function and attached to SPI1 with the following properties:
+	<ul>
+<li>GPIO_Mode_AF</li>
+		<li>GPIO_OType_PP</li>
+		<li>GPIO_PuPd_NOPULL</li>
+		<li>GPIO_Speed_50MHz</li>
+	</ul>
+</li>
+</ul><ul>
+<li>
+<b>Chip Select Pin</b> Identify the chip select pin from the schematic. Give this output the following properties:
+	<ul>
+<li>GPIO_Mode_OUT</li>
+		<li>GPIO_OType_PP</li>
+		<li>GPIO_Speed_50MHz</li>
+	</ul>
+</li>
+</ul><ul>
+<li>
+<b>SPI1</b> Setup SPI1 with the following parameters.</li>
+</ul><pre><code>SPI_I2S_DeInit(SPI1);
+SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
+SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
+SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
+SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
+SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
+SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
+SPI_InitStructure.SPI_CRCPolynomial = 7;
+SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
+SPI_Init(SPI1, &amp;SPI_InitStructure);
+SPI_RxFIFOThresholdConfig(SPI1, SPI_RxFIFOThreshold_QF);
+SPI_Cmd(SPI1, ENABLE);</code></pre>
+<h2>
+<span class="caps">SPI</span> Primatives</h2>
+<p>There are several base functions that you will need to create to allow basic reading and writing of the gyro. The functions are the as follows:</p>
+<ul>
+<li>(macros) GYRO_CS_LOW/GYRO_CS_HIGH</li>
+	<li>ds_gyro_sendbyte(uint8_t byte);</li>
+	<li>ds_gyro_read(uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead);</li>
+	<li>ds_gyro_write(uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite);</li>
+</ul><h3>(macros) GYRO_CS_LOW/GYRO_CS_HIGH</h3>
+<p>You will need to control the chip selects directly. To assist in making your code more readable, create macros to set the chip select high and low using <b>GPIO_ResetBits</b> and <b>GPIO_SetBits</b>.</p>
+<h3>ds_gyro_sendbyte(uint8_t byte);</h3>
+<p>Similar to the functionality of the <span class="caps">UART</span> from lab1, you will need to poll the transmitter status prior to writing the byte to send to the transmitter register.</p>
+<pre><code>while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET); 
+SPI_SendData8(SPI1, byte);</code></pre>
+<p>One Key difference between the <span class="caps">UART</span> and <span class="caps">SPI</span>, is that a byte is received for each one that is sent. You will need to poll to confirm that receiver has fully received the character prior to reading it.</p>
+
+	<ul>
+<li>Notice that we did not control the chip select in this function. We will use this function to create read and write functions that read one or more bytes. When reading/writing multiple bytes, the chip select remains asserted throughout the entire transmission. This is why the chip select is not controlled in the low level single byte function. **</li>
+	</ul><pre><code>while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE) == RESET)
+return (uint8_t)SPI_ReceiveData8(SPI1);</code></pre>
+<h3>ds_gyro_read(uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead);</h3>
+<p>This function needs to be able to handle the reading of multiple bytes from the interface. When we are talking to the gyro, we need to indicate the following related to the transaction.</p>
+<ul>
+<li>Read or Write</li>
+	<li>Single or Multiple Byte<br>
+Bit 7 (Read/Write Mode) and Bit 6 (Single/Multiple Byte Mode) of the address are used to indicate the mode of the transfer. Because this read function handles both single and multiple transactions, we will need to look at the number of bytes to determine if bit 6 should be set.</li>
+</ul><pre><code>if (NumByteToRead &gt; 0x01) {
+  ReadAddr |= (uint8_t)(0x80 | 0x40); // If sending more that one byte set multibyte commands
+}
+else {
+  ReadAddr |= (uint8_t) (0x80); // Else just set the read mode 
+}</code></pre>
+<p>The address now carries information about where to start the read and whether the gyro should expect to see addition bytes being read.</p>
+<p>To start the transaction, the chip select goes low and the address byte is sent.</p>
+<pre><code>GYRO_CS_LOW()
+ds_gyro_sendbyte(ReadAddr);</code></pre>
+<p>The gyro will now return the data from the previous transaction as each byte is clocked. We will clock out the dummy data just to cause the <span class="caps">SPI</span> to clock the <span class="caps">SCLK</span> pins.</p>
+<pre><code>while(NumByteToRead &gt; 0x00) {
+  *pBuffer = ds_gyro_sendbyte(((uint8_t)0x00));
+  NumByteToRead--;
+  pBuffer++;
+}</code></pre>
+<p>To complete the transaction, we need to set the chip select high.</p>
+<pre><code>GYRO_CS_HIGH();</code></pre>
+<h3>void ds_gyro_write(uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite)</h3>
+<p>Similar to the read function, this function has the capability to handle multiple bytes. Below is the pseudocode for the function.</p>
+<ul>
+<li>If multiple bytes, set bit 6 of WriteAddr</li>
+	<li>Assert the chip select (write it to low)</li>
+	<li>Send the first byte</li>
+	<li>If multiple bytes, loop to send the additional bytes.</li>
+	<li>De-assert the chip select (write it high)</li>
+</ul><h2>Gyro Initialization</h2>
+<p>The gyro has registers that can be written to setup the device. The device parameters are encoded within each control register. You will write a function that calls your interface initialization function from above and then write control register 1 and control register 4.</p>
+<ul>
+<li>Control Register 1 (Address: 0×20)</li>
+</ul><pre><code>// CTRL1 Register 
+// Bit 7:6 Data Rate: Datarate 0
+// Bit 5:4 Bandwidth: Bandwidth 3
+// Bit 3: Power Mode: Active
+// Bit 2:0 Axes Enable: X,Y,Z enabled
+ctrl1 |= (uint8_t) (((uint8_t)0x00) |\
+                   ((uint8_t)0x30) |\
+		   ((uint8_t)0x08) |\
+		   ((uint8_t)0x07));    </code></pre>
+<ul>
+<li>Control Register 4 (Address: 0×23)</li>
+</ul><pre><code>// CTRL4 Register 
+// Bit 7 Block Update: Continuous */
+// Bit 6 Endianess: LSB first  */
+// Bit 5:4 Full Scale: 500 dps */
+ctrl4 |= (uint8_t) (((uint8_t)0x00) |\
+                    ((uint8_t)0x00) |\
+		    ((uint8_t)0x10));      </code></pre>
+<ul>
+<li>Write the initialization function for the gyro, <b>void ds_gyro_init(void)</b> using the following pseudocode.</li>
+</ul><ul>
+<li>ds_gyro_interface_init()</li>
+		<li>write gyro ctrl1</li>
+		<li>write gyro ctrl4</li>
+	</ul><h2>Getting Data from the Gyro: void ds_gyro_getdata(float *pfData)</h2>
+<p>The data for each axis is encoded in two bytes. These bytes are encoded in 6 successive bytes starting at address 0×28. The data can be read using:</p>
+<pre><code>ds_gyro_read(tmpbuffer,0x28,6); </code></pre>
+<p>The data needs to be combined into 16 bit words which can be accomplished using:</p>
+<pre><code>for(i=0; i&lt;3; i++) {
+  RawData[i]=(int16_t)(((uint16_t)tmpbuffer[2*i+1] &lt;&lt; 8) + tmpbuffer[2*i]);
+}</code></pre>
+<p>The raw data needs to be divided by the sensitivity value for the 500 dps setting that we applied when we initialized the gyro.</p>
+<pre><code>#define GYRO_Sensitivity_500dps   (float) 57.1429f</code></pre>
+<pre><code>for(i=0; i&lt;3; i++) {
+  pfData[i]=(float)RawData[i]/GYRO_Sensitivity_500dps;
+}</code></pre>
+<h2>Assignment</h2>
+<p>Develop a system that allows a user to select a measurement axis using the user button. The system should output the current axis on the console along with the measured data. Additionally, each sample should be displayed on the <span class="caps">LED</span> display. Start by lighting the north led for values greater than 5 dgps and then lighting additional leds proportional to the rate with south led being the maximum rate. The idea is that the leds will act as a type of bar graph. Positive values should light the western side of the led circle and negative values should light the eastern side.</p>
+<p>Along with being able to cycle through the X, Y, and Z axis with the user button, the user should also be able to type the letter of the axis into the console to select it. If the user then elects to use the button, the cycle should start at the current axis.</p>
+<h2>What to Turn in:</h2>
+<p>This assignment is due by midnight on <b>1/31</b>. At midnight, your AI will pull the current state of your repository to review your code. In the following lab session, you will be asked to demonstrate your solution. Independently, you will also write a lab report describing in approximately 300 words or less the following:</p>
+<ul>
+<li>Description of your solution.</li>
+	<li>Description of issues that you encountered in developing your solution.</li>
+</ul><p>You will turn in this lab report in the oncourse assignments section.</p>
+    </div>
+  </div>
+  </div>
+
+</div>
+<div id="gollum-footer">
+  <p id="last-edit">
+    Last edited by bhimebau, <time class="js-relative-date" datetime="2013-01-29T10:30:37-05:00" title="2013-01-29 10:30:37">January 29, 2013</time>
+  </p>
+</body>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab3.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:21 GMT -->
+</html>

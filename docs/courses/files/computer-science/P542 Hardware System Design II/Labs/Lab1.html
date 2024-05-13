@@ -1,0 +1,211 @@
+<html>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab1.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:19 GMT -->
+<head><title>Lab 1 - P542 Hardware System Design II - enriqueareyan.com</title></head>
+<body>
+<div>
+  <div>
+  <div>
+    <div>
+    <h1>Lab 1</h1>
+      <h1>Introduction</h1>
+<h2>Github</h2>
+<p>You will be using the IU enterprise github installation. This is a version control system that has a rich set of features for developers. Your team will be creating a single private repository called digitalsystems.</p>
+<ul>
+<li>one team member should create a new repository at <a href="https://github.iu.edu/">https://github.iu.edu</a> named <b>digitalsystems</b>.
+	<ul>
+<li>Create the repository as private.</li>
+		<li>Initialize it with a <span>README</span>.</li>
+	</ul>
+</li>
+	<li>Use the "Admin" toolbar menu to access the properties for the repository.
+	<ul>
+<li>Add your partner as a collaborator. Additionally add the following instructors as collaborators to allow for evaluation of your source code. They will receive notification when you add them as a collaborator.
+		<ul>
+<li>bhimebau</li>
+			<li>luha</li>
+			<li>sachjosh</li>
+		</ul>
+</li>
+	</ul>
+</li>
+	<li>Clone your repository. Swap <b>yourusername</b> with the correct information for your repository.</li>
+</ul><pre><code>git clone git@github.iu.edu:yourusername/digitalsystems.git</code></pre>
+<h2>Code Template</h2>
+<p>You should now have a directory in your storage space called digitalsystems. The next step will involve initializing this space with date from a code template. This template provides a build framework and an initial starting point for your course code base.</p>
+<ul>
+<li>Copy the template code from /l/arm2/resources to your digitalsystems directory. Adjust the path to your digital systems directory.</li>
+</ul><pre><code>cp /l/arm2/resources/digitalsystems.tgz /path/to/digitalsystems</code></pre>
+<ul>
+<li>Untar the template into the digitalsystems directory.</li>
+</ul><pre><code>bhimebau@silo:~/forge/digitalsystems] $ tar zxvf digitalsystems.tgz</code></pre>
+<ul>
+<li>This framework contains a directory for lab1 along with an area to keep your driver code. In this lab you will write drivers for the leds and the F3 board button.</li>
+</ul><ul>
+<li>remove the digitalsystems.tgz file.</li>
+</ul><pre><code>rm digitalsystems.tgz</code></pre>
+<ul>
+<li>add the code to your repository.</li>
+</ul><pre><code>git add *
+git commit -m "initial commit of the code template"
+git push origin master </code></pre>
+<ul>
+<li>You should navigate to the web address for your repository and confirm that the code has been updated.</li>
+	<li>For more information about git, Scott Chacon has an excellent reference posted at <a href="http://git-scm.com/book">Pro Git</a>.</li>
+</ul><h2>Initial Code Build</h2>
+<p>You are almost ready to build the template. You will just need to update your path and then make the code.</p>
+<ul>
+<li>Path: Assuming that your are using a bash shell, you will need to add the following to your .bashrc file.</li>
+</ul><pre><code>export PATH=/l/arm2/codesourcery/bin:$PATH</code></pre>
+<ul>
+<li>Building the code: Enter the lab1 directory and make the code.</li>
+</ul><pre><code>[bhimebau@silo:~/forge/digitalsystems] $ cd lab1/
+[bhimebau@silo:~/forge/digitalsystems/lab1] $ make</code></pre>
+<ul>
+<li>The final output of this process is lab1.elf. Confirm that this file was created.</li>
+</ul><pre><code>[bhimebau@silo:~/forge/digitalsystems/lab1] $ ls
+ds_led.d  ds_led.o  lab1.elf  main.c  main.d  main.o  Makefile  startup_stm32f30x.o  stm32f30x_gpio.d  stm32f30x_gpio.o  stm32f30x_rcc.d  stm32f30x_rcc.o  system_stm32f30x.d  system_stm32f30x.o
+[bhimebau@silo:~/forge/digitalsystems/lab1] $ </code></pre>
+<h2>Downloading to the Board</h2>
+<p>There are a couple of ways to download your code to the flash on the F3 board. This example will describe the simpler process using a utility called st-flash.</p>
+<ul>
+<li>Confirm that your board's usb connector is plugged into the machine. The F3 board has two <span >USB</span> connections. The one labeled <span >USB</span>-ST-Link is the one that you need to connect.</li>
+	<li>Downloading: the st-flash utility will copy a binary file to the STM32F3 flash through the stlink debugger channel. A utility called objcopy will be used to create the binary file that we need for downloading. This entire process is included when you run the following make command.</li>
+</ul><pre><code>bhimebau@osprey:~/forge/digitalsystems/lab1$ make download</code></pre>
+<ul>
+<li>Congratulations you have just created your first build and downloaded it to the board. You will not see much with this build because we still need to add functionality to this code. Currently the code initializes and then sits in an infinite loop.</li>
+</ul><h2><span >LED</span></h2>
+<p>This section will focus on lighting one of the LEDs on the board.</p>
+<ul>
+<li>Determining the correct port and pin for the LEDs: We will use <a href="docs/f3_schematic.html">schematic</a> to locate the LEDs. See page 4 which includes a compass rose that illustrates the leds along with the associated port mapping.</li>
+</ul><ul>
+<li>Let's target the north facing red led. This led is on <b>port E at pin 9 (PE9)</b>. Notice that all of the leds are attached to Port E. Additionally, note that the port pins run through the leds to ground. This indicates that a one on the pin will cause the led to light.</li>
+</ul><ul>
+<li>ST Libraries: ST has developed a set of libraries that simplifies the interface to the peripherals in the STM32F3. The source code for these libraries is located at:</li>
+</ul><pre><code>/l/arm2/STM32F3-Discovery_FW_V1.1.0/Libraries/STM32F30x_StdPeriph_Driver </code></pre>
+<p>This code is documented using the Doxygen documentation tool. The documentation for the libraries is posted at <a href="http://www.cs.indiana.edu/~bhimebau/f3lib/html/">http://www.cs.indiana.edu/~bhimebau/f3lib/html/</a>.</p>
+<ul>
+<li>We are going to want to specifically focus on the GPIO_Init function in the <a href="http://www.cs.indiana.edu/~bhimebau/f3lib/html/stm32f30x__gpio_8c.html">stm32f30x_gpio.c</a> file. This function takes a <span >GPIO</span> port and an initialization structure as inputs. The structure allows us to configure the parameter for one or many pins on the same port simultaneously. For now, add this structure initialization to your main() in main.c of the lab1 directory.</li>
+</ul><pre><code>GPIO_InitTypeDef GPIO_InitStructure;
+GPIO_StructInit(&amp;GPIO_InitStructure);
+GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9; 
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;</code></pre>
+<ul>
+<li>If you would like to extend this function to configure more than pin 9, you can "or" in additional pins to the GPIO_InitStructure.GPIO_Pin member.</li>
+</ul><ul>
+<li>Now that we have the structure defined, we need to call the GPIO_Init function to apply this structure to the specific pin on port E. However, prior to doing this, recall that we need to enable the clock for this port. We do this using a call to the <b>Reset and Clock Control (<span >RCC</span>)</b> peripheral.</li>
+</ul><pre><code>RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOE, ENABLE);</code></pre>
+<ul>
+<li>Once the clock is enabled, we can go ahead with the port configuration.</li>
+</ul><pre><code>GPIO_Init(GPIOE, &amp;GPIO_InitStructure);</code></pre>
+<ul>
+<li>PE9 is now configured as an output. To write a one to the pin, you need to write to GPIOE's bit set register.</li>
+</ul><pre><code>GPIOE-&gt;BSRR = GPIO_Pin_9;</code></pre>
+<ul>
+<li>If we were interested in turning the <span>LED</span> off, we could use the reset register.</li>
+</ul><pre><code>GPIOE-&gt;BRR = GPIO_Pin_9;</code></pre>
+<ul>
+<li>You main() function should look something like the following:</li>
+</ul><pre><code>int main(void) { 
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_StructInit(&amp;GPIO_InitStructure);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9; 
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOE, ENABLE);
+  GPIO_Init(GPIOE, &amp;GPIO_InitStructure);
+  GPIOE-&gt;BSRR = GPIO_Pin_9;
+  while (1);
+}</code></pre>
+<ul>
+<li>Building: Run make on the lab1 directory.</li>
+</ul><pre><code>bhimebau@osprey:~/forge/digitalsystems/lab1$ make</code></pre>
+<ul>
+<li>Error: You should receive an error similar to the following:</li>
+</ul><pre><code>/home/bhimebau/forge/digitalsystems/lab1/main.c:49: undefined reference to `RCC_AHBPeriphClockCmd'
+/home/bhimebau/forge/digitalsystems/lab1/main.c:51: undefined reference to `GPIO_Init'</code></pre>
+<p>This is telling you that the linker tried to resolve the symbols and ran into a couple of problems. This is because we need to specifically tell the compiler to build the <span>RCC</span> and <span>GPIO</span> drivers. To correct the issue, we need to add the driver object files to the build objects in the Makefile:</p>
+<pre><code>OBJS=  $(STARTUP) main.o ds_led.o stm32f30x_rcc.o stm32f30x_gpio.o</code></pre>
+<ul>
+<li>When we run make again the code should build cleanly. We can go ahead and download it to see if we get the expected result on the red led.</li>
+</ul><pre><code>make download </code></pre>
+<ul>
+<li>If all went well, the top red led should be constantly on.</li>
+</ul><h2>Button:</h2>
+<p>The F3 board includes a user input button. The user input button is blue while the system reset is the black button. We are going to track the status of the user button on the red led.</p>
+<ul>
+<li>Initialize the input pin: Review page 4 of the <a href="docs/f3_schematic.html">schematic</a> to identify the port and pin for the <b><span>USER</span> &amp; <span>WAKE</span>-UP</b> button.</li>
+</ul><ul>
+<li>Don't forget to enable the clock the port that includes the button.</li>
+</ul><ul>
+<li>Setup the structure to initialize the pin as an input. You will need to set the GPIO_Mode. You will not need to set GPIO_OType or GPIO_Speed. For an input you might need to set GPIO_PuPd_NOPULL. However, since the button circuitry already pulls the pin to a stable state, adding an internal pull-up or pull-down is not needed in this case.</li>
+</ul><pre><code>GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;</code></pre>
+<ul>
+<li>Reading the pin: You can read the state of the input bit using <a href="http://www.cs.indiana.edu/~bhimebau/f3lib/html/group__GPIO__Group2.html#ga98772ef6b639b3fa06c8ae5ba28d3aaa" title="">GPIO_ReadInputDataBit</a>. This function takes a port and a pin as input and returns the status <b>Bit_SET</b> or <b>Bit_RESET</b>.</li>
+</ul><ul>
+<li>Use an <b>if</b> block to link the button state to the red led state. When the button is <span>SET</span> (pressed), turn on the <span>LED</span> using:</li>
+</ul><pre><code>GPIOE-&gt;BSRR = GPIO_Pin_9;</code></pre>
+<p>When the button is <span>RESET</span> (released), turn off the red <span>LED</span> using:</p>
+<pre><code>GPIOE-&gt;BRR = GPIO_Pin_9;</code></pre>
+<ul>
+<li>Congratulations, you have written you first I/O driven program for the board! Next we are going to rearrange the code and extend it to include the other 7 LEDs.</li>
+</ul><h2>Assignment:</h2>
+<p>As the programs in the course grow, the initialization code will expand as well. It will be helpful if we encapsulate the initialization and helper functions in other files. In this assignment, you are going to be moving the led setup and low level driving code from the <b>main()</b> function and into the digitalsystems/driver/src/ds_led.c driver file.</p>
+<ul>
+<li>In the digitalsystems/driver/src/ds_led.c there are stubs of the functions that you need to write. You will need to move and extend the led initialization code that is currently in your main function.</li>
+</ul><pre><code>void ds_led_init(void) {
+  // initialize the port and pins for the 8 leds
+}
+void ds_led_on(int led) {
+  // enable the led specified by led parameter
+  // led = 0-7 representing the 8 leds
+}
+void ds_led_off(int led) {
+  // disable the led specified by led parameter
+  // led = 0-7 representing the 8 leds
+} 
+void ds_led_all_on(void) {
+  // turn on all 8 leds 
+} 
+void ds_led_all_off(void) {
+  // turn off all 8 leds
+} </code></pre>
+<ul>
+<li>Write and test these 5 functions to ensure that all of the functions work properly.</li>
+</ul><ul>
+<li>Delay function: In main.c of lab1, you will notice that there is a function called delay. This function runs through a look to create a delay. You are going to use this function to create pause between lighting each of the leds in sequence. You can adjust <b>i</b> to set the length of the delay.</li>
+</ul><pre><code>void delay(void) {
+  int i = 2000000;
+  while (i-- &gt; 0) {
+    asm("nop"); /* This stops it optimising code out */
+  }
+}</code></pre>
+<ul>
+<li>Sequenced led output: Utilize your led control functions to sequentially light each led. Pressing the user button will pause the sequence. The sequence should start with all leds off and and then end with all leds on. With exception of the all leds on state, only one led should be on at a time. The sequence should proceed around the circuit in a clockwise direction. The speed the sequence operates is up to you. However, it should be possible to visually identify each individual led state.</li>
+</ul><p>To implement the pause, think about where your program spends most of it's time when considering where to install the button polling.</p>
+<h2>What to Turn in:</h2>
+<p>This assignment is due by midnight on <b>1/17</b>. At midnight, your AI will pull the current state of your repository to review your code. In the following lab session, you will be asked to demonstrate your solution. Independently, you will also write a lab report describing in approximately 300 words or less the following:</p>
+<ul>
+<li>Description of issues that you encountered in developing your solution.</li>
+	<li>Information that was needed to complete the lab but was not included.</li>
+</ul><p>You will turn in this lab report in the oncourse assignments section.</p>
+    </div>
+  </div>
+  </div>
+
+</div>
+<div>
+  <p id="last-edit">
+    Last edited by bhimebau, <time class="js-relative-date" datetime="2013-01-15T10:57:29-05:00" title="2013-01-15 10:57:29">January 15, 2013</time>
+  </p>
+</div>
+</div>
+</body>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab1.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:21 GMT -->
+</html>

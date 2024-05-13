@@ -1,0 +1,16 @@
+urn.model <- function (){
+	urn <- c(1,1,1,1,2,5,5,10,10,10)
+	return <- 0
+	for(i in 1:40){
+		draw <- sample(urn,1,TRUE)
+		return <- return + draw
+	}
+	return (return)
+}
+urn.random.var <- function(n){
+	result <- NULL
+	for(i in 1:n){
+		result <- c(result,urn.model())
+	}
+	return (result)
+}

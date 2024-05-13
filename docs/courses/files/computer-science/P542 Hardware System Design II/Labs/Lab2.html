@@ -1,0 +1,160 @@
+<html>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab2.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:21 GMT -->
+<head><title>Lab 2 - P542 Hardware System Design II - enriqueareyan.com</title></head>
+<body>
+<h1>Lab 2</h1>
+<h2>Overview</h2>
+<p>In this lab, you will be adding a communication interface to your driver library. The interface will utilize UART1 to transfer data between the STM32 and the linux host. Once you have the basic link sending and receiving characters, you will build on these primitives to allow the system to have access to standard C functions from the <a href="http://sourceware.org/newlib/">newlib library</a>.</p>
+<h2>UART1</h2>
+<p>In this portion of the lab you will learn about configuring relevant I/O pins along with the <span class="caps">UART</span> module.</p>
+<h3>UART1 I/O Configuration</h3>
+<p>The STM32 has a very flexible I/O pin design. The I/O for a specific internal module like UART1 can be routed to specific pins on almost every port. The designer can decide which port is most appropriate given that some pin arrangements are mutually exclusive and prevent the use of the peripheral for other purposes. To designate the a pin is going to be dedicated to a specific module, the pin will be designated as "Alternate Function".</p>
+<p>We will be concerned with two UART1 pins - TX (transmit) and RX (receive). PC4 (TX) and PC5 (RX) will be selected as the pins that we will use for UART1. The initialization will follow very closely to what was done for the <span class="caps">LED</span> driver in <a class="internal present" href="Lab1.html">Lab1</a>. However, notice that the pin is not defined as an input or an output but rather alternate function (GPIO_Mode_AF).</p>
+<ul>
+<li><b><span class="caps">GPIOC</span> Clock Enable</b></li>
+</ul><pre><code>RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC, ENABLE);</code></pre>
+<ul>
+<li><b>TX Pin Initialization</b></li>
+</ul><pre><code>GPIO_StructInit(&amp;GPIO_InitStructure);
+GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
+GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+GPIO_Init(GPIOC,&amp;GPIO_InitStructure);</code></pre>
+<ul>
+<li><b>RX Pin Initialization</b></li>
+</ul><pre><code>GPIO_StructInit(&amp;GPIO_InitStructure);
+GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;     
+GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+GPIO_Init(GPIOC , &amp;GPIO_InitStructure);</code></pre>
+<ul>
+<li>
+<b>Alternate Function Configuration</b><br>
+The correct alternate function needs to be selected for PC4 and PC5 to route UART1 to these pins. Information about specific alternate function mapping is contained in the <a href="http://www.st.com/internet/com/TECHNICAL_RESOURCES/TECHNICAL_LITERATURE/DATASHEET/DM00058181.pdf">STM32F303 Data Sheet</a>. <b>Look at page 46 of the data sheet to determine the appropriate alternate function to make PC4 and PC5 to assign these pins to UART1. Once you have determined the proper function number, you can replace the "X" in the following configuration.</b>
+</li>
+</ul><pre><code>GPIO_PinAFConfig(GPIOC,4,GPIO_AF_X);
+GPIO_PinAFConfig(GPIOC,5,GPIO_AF_X);</code></pre>
+<h3>UART1 Module Configuration</h3>
+<p>The <span class="caps">UART</span> module is very flexible and capable. However, for the purposes much of the default configuration is adequate. We will primarily be concerned about setting the proper baud rate.</p>
+<ul>
+<li><b>UART1 Clock Enable</b></li>
+</ul><pre><code> RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);</code></pre>
+<ul>
+<li><b>UART1 Configuration</b></li>
+</ul><pre><code>USART_StructInit(&amp;USART_InitStructure);
+USART_InitStructure.USART_BaudRate = 9600;
+USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+USART_Init(USART1 ,&amp;USART_InitStructure);
+USART_Cmd(USART1 , ENABLE);</code></pre>
+<ul>
+<li><b>Linker</b></li>
+</ul><p>Don't forget to add <b>stm32f30x_usart.o</b> to the "<span class="caps">OBJS</span>" variable in your Makefile.</p>
+<h2>Sending and Receiving Characters</h2>
+<p>Initially, we will develop functions to send and receive characters using polling to test the status of the receiver and the transmitter. In future labs, we will replace this approach with one that allows us to be more efficiently use the processor's cycles. For now, polling represents the simplest approach to getting initial functionality from the <span class="caps">UART</span>.</p>
+<h3>Putchar</h3>
+<p>To transmit characters, we will need a routine to put characters on the transmitter. This routine will need to take a character as input, check to see if the transmitter is busy, and then write the character when the transmitter is available. The code to poll the <span class="caps">UART</span> status register and then write the data to the transmitter is as follows:</p>
+<pre><code>while (USART_GetFlagStatus(USART1,USART_FLAG_TXE) == (uint16_t)RESET);
+USART_SendData(USART1, c); </code></pre>
+<p><b>Write a putchar function with the following prototype.</b> For now, your putchar function can always return 0.</p>
+<pre><code>int putchar(int); </code></pre>
+<h3>Getchar</h3>
+<p>Similar to putchar, we also need a function to read characters from <span class="caps">UART</span> - getchar. This function will poll for the availability of a character, read it from the receiver, and the return it. The code to poll the UART's receiver is as follows:</p>
+<pre><code>while (USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == (uint16_t)RESET);
+c = USART_ReceiveData(USART1);</code></pre>
+<p><b>Write a getchar function with the following prototype.</b></p>
+<pre><code>int getchar(void); </code></pre>
+<h2>
+<span class="caps">USB</span>-Serial Adapter</h2>
+<p>With the <span class="caps">UART</span> configured and our helper functions written, the <span class="caps">USB</span>-Serial adapter needs to be connected to the STM32. You are going to use jumper wires to connect the pins using the pin assignment below. The <span class="caps">STM</span> pins have very clear labels. However, the labels on the <span class="caps">USB</span>-Serial adapter are less clear but still legible at the bottom edge.</p>
+<p>Regarding connecting the components, notice that the TX on the <span class="caps">STM</span> is connected to the RX on the <span class="caps">USB</span>-Serial adapter. Also, note that you will need to connect the ground of the <span class="caps">USB</span>-Serial Adapter to a ground pin on the <span class="caps">STM</span>.</p>
+<table>
+<tr>
+<th>STM32 Pin </th>
+		<th>
+<span class="caps">USB</span>-Serial Pin Label </th>
+	</tr>
+<tr>
+<td>PC4 </td>
+		<td>RX </td>
+	</tr>
+<tr>
+<td>PC5 </td>
+		<td>TX </td>
+	</tr>
+<tr>
+<td>
+<span class="caps">GND</span> </td>
+		<td>
+<span class="caps">GND</span> </td>
+	</tr>
+</table><h2>Testing</h2>
+<ul>
+<li>Connect the <span class="caps">USB</span> connection the <span class="caps">USB</span>-Serial adapter to the hub attached to the linux machine. Once the adapter is recognized by linux, a device will be added to the /dev directory called ttyUSB0. This is a character device that can be read and written.</li>
+</ul><pre><code>bhimebau@osprey:~$ ls /dev | grep ttyUSB
+ttyUSB0
+bhimebau@osprey:~$ </code></pre>
+<ul>
+<li>A program called <b>serialT</b> will be used to read and write the serial port from linux. This is a simple program that will allow you to send and receive character data. Go ahead and start serialT now. It will wait for serial data.</li>
+</ul><pre><code>bhimebau@osprey:~$ serialT</code></pre>
+<ul>
+<li>Verify that the system can send characters by sending a constant stream of a single letter.</li>
+</ul><pre><code>while(1) {
+  putchar('a');
+}</code></pre>
+<ul>
+<li>Verify that the system can also receive, add a function that transmits every character that is received.</li>
+</ul><pre><code>putchar(getchar())</code></pre>
+<ul>
+<li>
+<span class="caps">NOTE</span>: serialT will buffer an entire line prior to sending it. The impact is that it will not send any characters until you hit enter. So if you type "abcd", they will not be sent until you hit enter.</li>
+</ul><pre><code>serialT
+abcd
+abcd</code></pre>
+<ul>
+<li>Write a function called putstring() that will send a string of data across the terminal.</li>
+</ul><pre><code>void putstring(char *); </code></pre>
+<h2><a href="http://sourceware.org/newlib/">Newlib</a></h2>
+<p>Newlib is a port of standard C libraries that does not depend on an operating system. The library expects that the programmer will provide functions that know how to handle the services that the operating system typically provides. Even though our putstring() function is useful, sometimes it would be more helpful to have a more full-featured printf().</p>
+<p>The library functions that need to be provided by the programmer are called "stubs". A good example of a template for the stub functions is posted at this <a href="https://sites.google.com/site/stm32discovery/open-source-development-with-the-stm32-discovery/getting-newlib-to-work-with-stm32-and-code-sourcery-lite-eabi">site</a>. We will adapt this piece of code to utilize our new getchar and putchar functions.</p>
+<ul>
+<li>Open the <a href="https://github.iu.edu/SOIC-Digital-Systems/Spring-2013/blob/master/lab2/newlib_stubs.c">newlib_stubs.c</a> file in the lab2 repository. You will need make updates to the _read and _write functions to include your new getchar and putchar functions.</li>
+</ul><ul>
+<li>Include this new object file in the Makefile.</li>
+</ul><ul>
+<li>To prevent the library from buffing I/O, you will need to add the following lines to your startup code in your main function.</li>
+</ul><pre><code>setvbuf(stdin, NULL, _IONBF, 0);
+setvbuf(stdout, NULL, _IONBF, 0);
+setvbuf(stderr, NULL, _IONBF, 0);</code></pre>
+<ul>
+<li>Confirm that printf works by outputting "Hello World!".</li>
+</ul><h2>Assignment:</h2>
+<p>We are going to be extending the sequenced led code from lab1. The lab2 version will allow you to pause the code from serialT using ‘p'=pause, ‘r'=resume (any other keystroke can be ignored). Your code should still allow the user to pause the sequence using the user button. Additionally, when paused your code should indicate the current led by printing it to the console. It should only print one time for each pause event. There are compass directions printed near the leds on the board (N, E, S, W). Use the compass directions when you are indicating which led. Use (NE, SE, SW, NW) for the other leds. Additionally, use <span class="caps">ALL</span> and <span class="caps">NONE</span> for the corresponding states.</p>
+<ul>
+<li>
+<b>Note:</b> you will need to develop a non-blocking function that reads characters from the console.</li>
+</ul><h2>What to Turn in:</h2>
+<p>This assignment is due by midnight on <b>1/24</b>. At midnight, your AI will pull the current state of your repository to review your code. In the following lab session, you will be asked to demonstrate your solution. Independently, you will also write a lab report describing in approximately 300 words or less the following:</p>
+<ul>
+<li>Description of your solution.</li>
+	<li>Description of issues that you encountered in developing your solution.</li>
+</ul><p>You will turn in this lab report in the oncourse assignments section.</p>
+    </div>
+  </div>
+  </div>
+
+</div>
+<div id="gollum-footer">
+  <p id="last-edit">
+    Last edited by bhimebau, <time class="js-relative-date" datetime="2013-01-24T10:23:08-05:00" title="2013-01-24 10:23:08">January 24, 2013</time>
+  </p>
+</div>
+</div>
+</body>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab2.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:21 GMT -->
+</html>

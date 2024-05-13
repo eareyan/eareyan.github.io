@@ -1,0 +1,200 @@
+<html>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab5.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:23 GMT -->
+<head><title>Lab 5 - P542 Hardware System Design II - enriqueareyan.com</title></head>
+<body>
+      <h1>Lab 5</h1>
+      <h2>Overview</h2>
+<p>In this lab, you are going to be using interrupts to improve your <span class="caps">UART</span> driver along with building a simple scheduler based on a periodic SysTick. Additionally, you will be working with the real-time clock to timestamp data from the sensors.</p>
+<h2>Systick (ds_systick.c[h])</h2>
+<p>A periodic interrupt is a common need within an embedded system. Given this fact, <span class="caps">ARM</span> has included a simple timer as part of the processor core that greatly simplifies the setup of a periodic interrupt.</p>
+<h2>Functions</h2>
+<h3>Initialization: <strong>void ds_systick_init(void)</strong>
+</h3>
+<p>The initialization for the systick timer is very straightforward. You will pass the system clock divided by the number of clocks per second to set the rate. For this lab, you need to generate 100 interrupts per second (100Hz or 10mS between interrupts).</p>
+<pre><code>void ds_systick_init(void) {
+  SysTick_Config(SystemCoreClock/100);
+}</code></pre>
+<h3>Interrupt Handler: <strong>void SysTick_Handler(void)</strong>
+</h3>
+<p>It is important that the interrupt handler is named exactly the same the definition that is placed into the vector table in the file: /l/arm2/STM32F3-Discovery_FW_V1.1.0/Libraries/<span class="caps">CMSIS</span>/Device/ST/STM32F30x/Source/Templates/gcc_ride7/startup_stm32f30x.s. You will be adding to this handler as the lab progresses. However, for now we are going to toggle a pin to allow confirmation that the interrupt is operating at the correct rate.</p>
+<pre><code>void SysTick_Handler(void) {
+  static state = 0;
+  state ^= 1;
+  if (state) { 
+    GPIOE-&gt;BSRR = 0x8000;  
+  }
+  else { 
+    GPIOE-&gt;BRR = 0x8000;
+  }
+}</code></pre>
+<h3>Testing</h3>
+<p>Use a Saleae logic probe to confirm that PE15 is toggling at the correct rate. Make sure that no other code is writing to PE15 …</p>
+<h2>Interrupt Driven <span class="caps">UART</span>
+</h2>
+<p>In this section, you will be improving your code in ds_uart.c to make it interrupt driven. You should start with your ds_uart code from the earlier labs.</p>
+<h2>Functions: ds_uart.c[h]</h2>
+<p>In this section, you will be creating TX and RX buffer data structures, initializing the <span class="caps">UART</span> to generate interrupts, and designing an interrupt handler.</p>
+<h3>Circular Buffers:</h3>
+<p>The interrupt routine will need circular buffers to store characters that have been received and characters that are waiting to be transmitted.</p>
+<ul>
+<li>Create circular buffers for RX and TX in ds_uart.c. You will need the following functions for each buffer. Additionally, you should make the size of the buffer a parameter that can be modified with a #define statement. Initially, start with each buffer at 32 bytes.
+	<ul>
+<li>void init_queue(*buffer);</li>
+		<li>
+<strong>int enqueue(</strong>buffer, int)*: Adds an int to the buffer. This function needs to return 1 when the character was successfully added and 0 when the buffer did not have room to add the character.</li>
+		<li>
+<strong>int dequeue(</strong>buffer)*: Remove a character from the buffer. If the buffer is empty, 0 should be returned.</li>
+		<li>
+<strong>int queue_empty(</strong>buffer)*; Returns 1 if the buffer is empty and 0 otherwise.</li>
+	</ul>
+</li>
+</ul><p><strong>You should test your queue functions in isolation to ensure that the work properly.</strong></p>
+<h3>Initialization: <strong>void ds_uart_init(void)</strong>:</h3>
+<p>You will need to configure the <span class="caps">UART</span> to generate interrupts. This involves enabling the interrupts at the <span class="caps">UART</span> and additionally enabling the interrupts at the <span class="caps">NVIC</span> (nested vectored interrupt controller).</p>
+<ul>
+<li>initialize your circular buffer pointers</li>
+	<li>Setup the priority for USART1 in the <span class="caps">NVIC</span>. Initializing the <span class="caps">NVIC</span> follows the same pattern that has been seen in <span class="caps">GPIO</span> and peripheral initialization. In this case, the priority of the <span class="caps">UART</span> is set to 8. This puts it in the middle of the priority range. As the system becomes more complex in later labs, this priority may need to be adjusted.</li>
+</ul><pre><code>NVIC_InitTypeDef NVIC_InitStructure;</code></pre>
+<pre><code>NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x08;
+NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x08;
+NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+NVIC_Init(&amp;NVIC_InitStructure);</code></pre>
+<p>Now that the <span class="caps">NVIC</span> has been setup. The RX interrupt can be initialized using <a href="http://www.cs.indiana.edu/~bhimebau/f3lib/html/group__USART.html#ga70b4cd986edab929e38ac6a427492b7c">USART_ITConfig</a>.</p>
+<pre><code>USART_ITConfig(USART1,USART_IT_RXNE,ENABLE);</code></pre>
+<p>You might be wondering why the transmitter interrupt is not enabled at the same time. The reason is that the uart transmitter will generate an interrupt when it is empty to let the system know that it can accept another interrupt. If the interrupt were enabled at this point, the handler would be immediately even though there are no characters to send. The transmit interrupt should only be used when there is something to send and should be disabled once the transmit queue is empty.</p>
+<h3>Handler: <strong>void USART1_IRQHandler(void);</strong>
+</h3>
+<p>The USART1 module has a single handler for all of the potential interrupt sources. We only need to consider the <span class="caps">RXNE</span> and <span class="caps">TXE</span> interrupt sources as there are the only sources that we are going to enable. In your handler you will need to check for the following flags:</p>
+<pre><code>USART_GetFlagStatus(USART1, USART_FLAG_RXNE)</code></pre>
+<p>If the <span class="caps">RXNE</span> is set, the character should be read from the receiver:</p>
+<pre><code>ch = USART_ReceiveData(USART1);</code></pre>
+<p>This should look very familiar from the polled implementation. However, in this case we know that either <span class="caps">RXNE</span> or <span class="caps">TXE</span> or we would not be in the handler.</p>
+<pre><code>enqueue(&amp;rxbuf,ch); </code></pre>
+<p>The character need to be placed on the receiver's queue. However, the issue of what to do if the queue is full needs to be considered. At this point, we are going to just throw away the character if there is no space available. We will consider more graceful alternatives in later labs. However, we must not wait in the handler.</p>
+<pre><code>if (USART_GetFlagStatus(USART1,USART_FLAG_TXE)) {
+    ch = dequeue(&amp;txbuf);
+    if (ch) {
+      USART_SendData(USART1,ch);
+    }
+    else {
+      USART_ITConfig(USART1,USART_IT_TXE,DISABLE); 
+    }
+  }
+}</code></pre>
+<p>The transmitter requires a bit more logic to handle. If the transmitter is empty, the transmitter's queue needs to be checked to see if there are any characters that are available to send. If there are, then it can grab the character and put it into the transmitter.</p>
+<p>However, if there are not any characters to send, the transmitter interrupt needs to be disabled. If this is not done, the <span class="caps">UART</span> will continually generate interrupts to let the system know that the tranmitter is empty. This is not very useful information unless we have something to send.</p>
+<h3>Transmitter Interrupt: <strong>flush_uart(void)</strong>
+</h3>
+<p>Periodically or explicitly, the system needs enable the transmitter interrupt to clear out the buffer. Turning on the interrupt will immediately cause a <span class="caps">UART</span> interrupt and the first character will be sent.</p>
+<pre><code>void flush_uart(void) {
+  USART_ITConfig(USART1,USART_IT_TXE,ENABLE); 
+}</code></pre>
+<p>It is best to periodically check to see if there are any characters in the transmitter and call this function. A good place to perform this check is in the Systick handler. You should go ahead and add this to Systick.</p>
+<h3>Updated <strong>int getchar(void)</strong>
+</h3>
+<p>Now that characters are being buffered in the interrupt handler, the getchar function will talk to the queue to get data rather than the receiver.</p>
+<pre><code>int getchar(void) {
+  int ch;
+  while (!(ch=dequeue(&amp;rxbuf)));
+  return (ch);
+}</code></pre>
+<p>Notice that if the queue is empty, then the function will wait until a character is available. You should update your getchar_nb function as well to use the rx buffer.</p>
+<h3>Updated putchar(int c);</h3>
+<p>Update your putchar function to use the transmit buffer. This function should block until it has room to add the buffer.</p>
+<p>At this point, you should be able to receive characters from the console along with printing using purchar and printf. Verify that the console interface is working using:</p>
+<ul>
+<li>putchar(getchar())</li>
+	<li>printf</li>
+</ul><h2>
+<span class="caps">RTC</span> <strong>ds_rtc.c[h]</strong>
+</h2>
+<p>The real-time clock is an internal peripheral on the STM32F series processor. In this lab, we are going to be initializing the clock and then reading it periodically to use as a timestamp for our sensor data.</p>
+<h2>Functions:</h2>
+<h3>Initialization: <strong>void ds_rtc_init(void)</strong>
+</h3>
+<p>The <span class="caps">RTC</span> follows the same initialization pattern as the other system peripherals in using a structure that is initialized and then passed to an init function. In this case of the <span class="caps">RTC</span>, there are three different sections that need to be addressed.</p>
+<ul>
+<li>Core</li>
+	<li>Date</li>
+	<li>Time</li>
+</ul><p>Declare the initialization structures</p>
+<pre><code>RTC_TimeTypeDef  RTC_TimeStructure;
+RTC_DateTypeDef  RTC_DateStructure;
+RTC_InitTypeDef  RTC_InitStructure;</code></pre>
+<p>To prevent an errant write from corrupting the clock, the <span class="caps">RTC</span> needs to be unlocked prior to writing. These commands enable the peripheral clock, enable access, and setup the oscillator that will be used for timekeeping.</p>
+<pre><code>RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
+PWR_BackupAccessCmd(ENABLE);   
+RCC_BackupResetCmd(ENABLE);
+RCC_BackupResetCmd(DISABLE);
+PWR_BackupAccessCmd(ENABLE);
+RCC_LSICmd(ENABLE);
+while(RCC_GetFlagStatus(RCC_FLAG_LSIRDY) == RESET);
+RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
+RCC_RTCCLKCmd(ENABLE);
+RTC_WaitForSynchro(); </code></pre>
+<p>Base setup for the clock.</p>
+<pre><code>RTC_StructInit(&amp;RTC_InitStructure);
+RTC_InitStructure.RTC_HourFormat = RTC_HourFormat_24;
+RTC_InitStructure.RTC_AsynchPrediv = 88;
+RTC_InitStructure.RTC_SynchPrediv = 470;
+RTC_Init(&amp;RTC_InitStructure); </code></pre>
+<p>This structure initialization sets up the date.</p>
+<pre><code>RTC_DateStructure.RTC_Year = 13;
+RTC_DateStructure.RTC_Month = RTC_Month_February;
+RTC_DateStructure.RTC_Date = 8;
+RTC_DateStructure.RTC_WeekDay = RTC_Weekday_Friday;
+RTC_SetDate(RTC_Format_BCD, &amp;RTC_DateStructure);</code></pre>
+<p>Similar to the date, this structure initialized the date.</p>
+<pre><code>RTC_TimeStructure.RTC_H12 = RTC_H12_AM;
+RTC_TimeStructure.RTC_Hours   = 0x09;
+RTC_TimeStructure.RTC_Minutes = 0x05;
+RTC_TimeStructure.RTC_Seconds = 0x00;  
+RTC_SetTime(RTC_Format_BIN, &amp;RTC_TimeStructure);</code></pre>
+<h3>Reading from the clock</h3>
+<p>You can read the time or date from the clock at any time using RTC_GetTime and RTC_GetDate. The call to the function would typically look like the following.</p>
+<pre><code>RTC_GetTime(RTC_Format_BIN, &amp;RTC_TimeStructure); 
+RTC_GetDate(RTC_Format_BIN, &amp;RTC_DateStructure); </code></pre>
+<h2>Scheduler</h2>
+<p>With a regular interrupt from Systick, a scheduler can be designed with counters to run functions at integer multiples of the base period of 10mS. The following is an example of how this might be accomplished.</p>
+<pre><code>void scheduler(void) {
+  static int counter_100mS = 0; 
+  if (counter_100mS++==10) {
+    counter_100mS=0;
+    // tasks to accomplish at 100mS intervals
+  }
+}</code></pre>
+<p>When considering where to run this function, it is tempting to call it directly from the Systick handler. However, this is typically not a good idea given that the scheduler might contain functions that could block like printf. It is better to set a flag in the systick handler. This flag can be tested and cleared in the main function.</p>
+<pre><code>if (systick_flag) {
+  systick_flag=0;
+  schedule();
+}</code></pre>
+<h2>Assignment</h2>
+<ul>
+<li>Sample the gyro, accelerometer, and magnetometer at 10hz. Average the values over 10 samples. At 1Hz, output the average data in comma delimited format to the terminal. Each row will be time stamped.
+	<ul>
+<li><strong>02/08/2013,HH:MM:SS,gyro_x,gyro_y,gyro_z,accel_x,accel_y, accel_z,mag_x,mag_y,mag_z</strong></li>
+	</ul>
+</li>
+	<li>Add a console interface to allow the time to be set. When a ‘t' or ‘T' is pressed, take user input to allow the current date and time to be written.</li>
+</ul><h2>What to Turn in:</h2>
+<p>This assignment is due by midnight on <b>2/14</b>. At midnight, your AI will pull the current state of your repository to review your code. In the following lab session, you will be asked to demonstrate your solution. Independently, you will also write a lab report describing in approximately 300 words or less the following:</p>
+<ul>
+<li>Description of your solution.</li>
+	<li>Description of issues that you encountered in developing your solution.</li>
+	<li>Block Diagram of the system that your team is considering for the project. The hardware modules that are needed to implement the project should be included. It is not important to select specific components at this point, but the basic module function should be identified.</li>
+</ul><p>You will turn in this lab report in the oncourse assignments section.</p>
+    </div>
+  </div>
+  </div>
+
+</div>
+<div id="gollum-footer">
+  <p id="last-edit">
+    Last edited by bhimebau, <time class="js-relative-date" datetime="2013-02-08T08:15:30-05:00" title="2013-02-08 08:15:30">February 08, 2013</time>
+  </p>
+</body>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab5.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:23 GMT -->
+</html> 

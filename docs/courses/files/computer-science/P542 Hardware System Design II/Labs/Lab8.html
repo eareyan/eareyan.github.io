@@ -1,0 +1,190 @@
+<html>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab8.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:23 GMT -->
+<head><title>Lab 8 - P542 Hardware System Design II - enriqueareyan.com</title></head>
+<body>
+      <h1>Lab 8</h1>
+      <h1>Overview</h1>
+<p>In this lab you will reading the voltage on your board using the STM32 A2D converter. Initially you will be printing this value to the terminal. Next you will utilize the D2A converter to synthesis a sine wave and output it to the speaker. The samples of the waveform will be output at a rate controlled by Timer 2. A <span class="caps">DMA</span> channel will be used to move samples from memory to the <span class="caps">DAC</span> register. Finally, you utilize the A2D value to control the output rate of the sine wave.</p>
+<p>You will be creating the following driver modules:</p>
+<ul>
+<li>ds_a2d.c/h</li>
+	<li>ds_timer2.c/h</li>
+	<li>ds_dac.c/h</li>
+</ul><p><b>The code for this lab is based very closely on the peripheral example code located at:</b></p>
+<ul>
+<li><b>/l/arm2/STM32F3-Discovery_FW_V1.1.0/Project/Peripheral_Examples/ADC_Example</b></li>
+	<li><b>/l/arm2/STM32F3-Discovery_FW_V1.1.0/Project/Peripheral_Examples/DAC_SignalGenerations</b></li>
+</ul><h2>Initial Setup</h2>
+<ul>
+<li>
+<b>Dac/gyro pin conflict:</b> One of the dac pins is share with the <span class="caps">SPI</span> <span class="caps">SCK</span> used to talk to the gyro. For this lab, you will need to disable read/writing from the gyro.</li>
+	<li>
+<b>Delay Function:</b> Make sure to initialize your ds_delay_uS() function from Lab 6. You will need this function in the initialization of the A2D converter.</li>
+</ul><h2>A2D [ds_A2D.c/h]</h2>
+<p>We will be reading ADC1 Channel 10 which is on pin PF4.</p>
+<h3>void ds_a2d_init(void):</h3>
+<ul>
+<li>Initialize the clocks</li>
+</ul><pre><code>RCC_ADCCLKConfig(RCC_ADC12PLLCLK_Div2);
+RCC_AHBPeriphClockCmd(RCC_AHBPeriph_ADC12, ENABLE);
+RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOF, ENABLE);</code></pre>
+<ul>
+<li>Initialize PF2 as an analog input pin<br>
+bc. GPIO_StructInit(&amp;GPIO_InitStructure);<br>
+GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;<br>
+GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;<br>
+GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;<br>
+GPIO_Init(<span class="caps">GPIOF</span>, &amp;GPIO_InitStructure);</li>
+</ul><ul>
+<li>Enable the ADC's voltage regulator and wait for it to stabilize</li>
+</ul><pre><code>ADC_VoltageRegulatorCmd(ADC1, ENABLE);
+ds_delay_uS(10);</code></pre>
+<ul>
+<li>Initialize the parameters that are common to all of the A2D Channels</li>
+</ul><pre><code>ADC_CommonStructInit(&amp;ADC_CommonInitStructure);
+ADC_CommonInitStructure.ADC_Mode=ADC_Mode_Independent;                                                      
+ADC_CommonInitStructure.ADC_Clock = ADC_Clock_AsynClkMode;                    
+ADC_CommonInitStructure.ADC_DMAAccessMode = ADC_DMAAccessMode_Disabled;             
+ADC_CommonInitStructure.ADC_DMAMode = ADC_DMAMode_OneShot;                  
+ADC_CommonInitStructure.ADC_TwoSamplingDelay = 0;          
+ADC_CommonInit(ADC1, &amp;ADC_CommonInitStructure);</code></pre>
+<ul>
+<li>Initialize the parameters specific to channel 10</li>
+</ul><pre><code>ADC_StructInit(&amp;ADC_InitStructure);   
+ADC_InitStructure.ADC_ContinuousConvMode = ADC_ContinuousConvMode_Enable;
+ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b; 
+ADC_InitStructure.ADC_ExternalTrigConvEvent = ADC_ExternalTrigConvEvent_0;         
+ADC_InitStructure.ADC_ExternalTrigEventEdge = ADC_ExternalTrigEventEdge_None;
+ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+ADC_InitStructure.ADC_OverrunMode = ADC_OverrunMode_Disable;   
+ADC_InitStructure.ADC_AutoInjMode = ADC_AutoInjec_Disable;  
+ADC_InitStructure.ADC_NbrOfRegChannel = 1;
+ADC_Init(ADC1, &amp;ADC_InitStructure);</code></pre>
+<ul>
+<li>Configure the specific <span class="caps">ADC</span>, channel, and timing</li>
+</ul><pre><code>ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 1, ADC_SampleTime_7Cycles5);</code></pre>
+<ul>
+<li>Enable the <span class="caps">ADC</span> and wait for it to become ready.</li>
+</ul><pre><code>ADC_Cmd(ADC1, ENABLE);
+while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_RDY));</code></pre>
+<pre><code>Start the first conversion
+ADC_StartConversion(ADC1); </code></pre>
+<p><b>The <span class="caps">ADC</span> is now ready to read values. The values will be converted into a 12-bit number.</b></p>
+<h3>void ds_read_adc(void):</h3>
+<p>This function will poll the A2D converter for an available conversion. Once ready, the function returns the converted 12-bit value.</p>
+<pre><code>uint16_t ds_read_adc(void) {
+  while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET);
+  return(ADC_GetConversionValue(ADC1));
+}</code></pre>
+<p><b>Incorporate this function into a while loop and use it to output the voltage from your lab system's potentiometer on the console. Vary the voltage and confirm proper functionality.</b></p>
+<h2>TIMER2</h2>
+<p>This timer will be used to control the rate at which the <span class="caps">DAC</span> outputs samples. We will need a function to initialize the timer along with a function that we will use later to vary the period.</p>
+<h3>void ds_timer2_init(void):</h3>
+<pre><code>TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;   
+RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+TIM_TimeBaseStructInit(&amp;TIM_TimeBaseStructure); 
+TIM_TimeBaseStructure.TIM_Period = 0xFF;          
+TIM_TimeBaseStructure.TIM_Prescaler = 0x0;       
+TIM_TimeBaseStructure.TIM_ClockDivision = 0x0;    
+TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  
+TIM_TimeBaseInit(TIM2, &amp;TIM_TimeBaseStructure);
+TIM_SelectOutputTrigger(TIM2, TIM_TRGOSource_Update);
+TIM_Cmd(TIM2, ENABLE);</code></pre>
+<h3>void ds_timer2_setperiod(uint16_t period):</h3>
+<p>This function will be used to update the period based on the converted potentiometer voltage. The function will keep a copy of the time structure similar to what was used in the initialization. The new period value can then be added to the structure and the timebase updated.</p>
+<pre><code>static TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+TIM_TimeBaseStructInit(&amp;TIM_TimeBaseStructure); 
+TIM_TimeBaseStructure.TIM_Prescaler = 0x0;       
+TIM_TimeBaseStructure.TIM_ClockDivision = 0x0;    
+TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  
+if (period &lt; 0x1F) period = 0x1F;
+period = period &lt;&lt; 4;
+TIM_TimeBaseStructure.TIM_Period = period;          
+TIM_TimeBaseInit(TIM2, &amp;TIM_TimeBaseStructure);</code></pre>
+<h3>
+<span class="caps">DAC</span>/<span class="caps">DMA</span>
+</h3>
+<p>This driver defines the data arrays used to generate the signals. It also initializes the <span class="caps">DAC</span> pins, the <span class="caps">DAC</span> channels, along with setting up <span class="caps">DMA</span> channels that loop through the samples and output them without software intervention.</p>
+<p>The DACs are driven by Timer 2. After a sample is output, the <span class="caps">DAC</span> triggers a <span class="caps">DMA</span> that moves the next sample from the particular data array to the DAC's output register.</p>
+<h3>Define Data</h3>
+<pre><code>#define DAC_DHR12R2_ADDRESS  0x40007414
+#define DAC_DHR8R1_ADDRESS 0x40007410</code></pre>
+<h3>Data Arrays</h3>
+<pre><code>const uint16_t Sine12bit[32] = {
+                      2047, 2447, 2831, 3185, 3498, 3750, 3939, 4056, 4095, 4056,
+                      3939, 3750, 3495, 3185, 2831, 2447, 2047, 1647, 1263, 909, 
+                      599, 344, 155, 38, 0, 38, 155, 344, 599, 909, 1263, 1647};    
+const uint8_t Escalator8bit[6] = {0x0, 0x33, 0x66, 0x99, 0xCC, 0xFF};</code></pre>
+<h3>void ds_dac_channel_setup(void):</h3>
+<pre><code>	DAC_DeInit(); 
+	DAC_InitStructure.DAC_Trigger = DAC_Trigger_T2_TRGO;
+	DAC_InitStructure.DAC_WaveGeneration = DAC_WaveGeneration_None;
+	DAC_InitStructure.DAC_LFSRUnmask_TriangleAmplitude = DAC_LFSRUnmask_Bits11_0;
+	DAC_InitStructure.DAC_OutputBuffer = DAC_OutputBuffer_Disable;
+	DAC_Init(DAC_Channel_2, &amp;DAC_InitStructure);
+	DAC_Cmd(DAC_Channel_2, ENABLE);
+	DMA_InitStructure.DMA_PeripheralBaseAddr = DAC_DHR12R2_ADDRESS;
+	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&amp;Sine12bit;
+	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
+	DMA_InitStructure.DMA_BufferSize = 32;
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
+	DMA_InitStructure.DMA_Priority = DMA_Priority_High;
+	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
+	DMA_Init(DMA2_Channel3, &amp;DMA_InitStructure);
+	DMA_Cmd(DMA2_Channel3, ENABLE);
+	DAC_DMACmd(DAC_Channel_2, ENABLE);
+	DAC_InitStructure.DAC_OutputBuffer = DAC_OutputBuffer_Enable;
+	DAC_Init(DAC_Channel_1, &amp;DAC_InitStructure);
+	DMA_DeInit(DMA2_Channel4);
+	DMA_InitStructure.DMA_PeripheralBaseAddr = DAC_DHR8R1_ADDRESS;
+	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&amp;Escalator8bit;
+	DMA_InitStructure.DMA_BufferSize = 6;
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	DMA_Init(DMA2_Channel4, &amp;DMA_InitStructure);
+	DMA_Cmd(DMA2_Channel4, ENABLE);
+	DAC_Cmd(DAC_Channel_1, ENABLE);
+	DAC_DMACmd(DAC_Channel_1, ENABLE);</code></pre>
+<h3>void ds_dac_init(void):</h3>
+<pre><code>GPIO_InitTypeDef GPIO_InitStructure;
+   RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA2, ENABLE);	
+   RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE);
+   GPIO_StructInit(&amp;GPIO_InitStructure);  
+   GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_4|GPIO_Pin_5;
+   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
+   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+   GPIO_Init(GPIOA, &amp;GPIO_InitStructure);
+   ds_dac_channel_setup();</code></pre>
+<h2>Assignment</h2>
+<ul>
+<li>Use the potentiometer to control the frequency of the sine wave output.</li>
+	<li>Use the following approaches to verifying that you can control the fequency
+	<ul>
+<li>Oscilloscope</li>
+		<li>Your board's speaker</li>
+	</ul>
+</li>
+</ul><h2>What to Turn in:</h2>
+<p>This assignment is due by midnight on <b>3/28</b>. At midnight, your AI will pull the current state of your repository to review your code. In the following lab session, you will be asked to demonstrate your solution. Independently, you will also write a lab report describing in approximately 300 words or less the following:</p>
+<ul>
+<li>Description of your solution.</li>
+	<li>Description of issues that you encountered in developing your solution.</li>
+</ul><p>You will turn in this lab report in the oncourse assignments section.</p>
+    </div>
+  </div>
+  </div>
+
+</div>
+<div id="gollum-footer">
+  <p id="last-edit">
+    Last edited by bhimebau, <time class="js-relative-date" datetime="2013-03-22T07:02:48-04:00" title="2013-03-22 07:02:48">March 22, 2013</time>
+  </p>
+</body>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab8.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:23 GMT -->
+</html>   

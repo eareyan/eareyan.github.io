@@ -1,0 +1,31 @@
+MidTerm 1 Review:
+
+Relationship between 
+
+2 bits of overhead per byte
+
+wait state has to do with speed of access
+
+Clock
+disable by default to save power
+we need to enable it 
+
+full duplex sending and receive at same time
+
+chip select bounds communication
+api shit register
+
+influence = technical, business, political, customer
+
+open collector, all have to be 1 (AND) 
+
+12C normal state HIGH, acknowledge LOW
+
+duty cycle of 4ms high time and 10ms period = 40%
+
+timer capture and timer compare (compare against a timer and set a bit on)
+
+cluster = 512 bytes
+FAT single link list where stored the next cluster of a file
+
+0xffff is the end of file marker

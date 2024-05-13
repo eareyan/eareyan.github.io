@@ -1,0 +1,127 @@
+<html>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab7.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:23 GMT -->
+<head><title>Lab 7 - P542 Hardware System Design II - enriqueareyan.com</title></head>
+<body>
+      <h1>Lab 7</h1>
+	<h1>Overview</h1>
+<p>In this lab, you are going to be working with the Nordic nRF24L01+ wireless transceiver. This device can be used to provide a low power wireless solution in systems that do not have high bandwidth requirements.</p>
+<p>Similar to the <span class="caps">FAT</span> file system, we are going to be leveraging a library to provide much of the functionality for the wireless chip. To use this library, we need to provide <strong>physical connections to the nRF24L01+</strong>, <strong><span class="caps">SPI</span> initialization</strong>, and a <strong>delay function (ds_delay_uS from Lab6)</strong>.  As an introduction to the nRF24L01+, you should read the following <a href="http://www.diyembedded.com/tutorials/nrf24l01_0/nrf24l01_tutorial_0.pdf">overview</a> by the creator of the library. Other resource materials related to the nRF24L01+ are posted at <a href="http://www.diyembedded.com/">www.diyembedded.com</a> . Additionally, you should skim the nRF24L01+ <a href="https://github.iu.edu/SOIC-Digital-Systems/Spring-2013/wiki/docs/nRF24L01P_Product_Specification_1_0-1.pdf">datasheet</a> .</p>
+<h2>Physical Connections</h2>
+<p>You will receive a transceiver carrier board in lab. <a href="http://www.sparkfun.com/">Sparkfun</a> provides a solution that includes the transceiver, oscillator, antenna, and supporting discrete components for ~$20. This board brings the necessary external connections to the edge of the board. There are 8 connections that need to be made.</p>
+<p>We will be using <strong>SPI3</strong> for this device.</p>
+<table>
+<tr>
+<th>nRF24L01+</th>
+		<th><span class="caps">STM</span></th>
+	</tr>
+<tr>
+<td><span class="caps">GND</span></td>
+		<td><span class="caps">GND</span></td>
+	</tr>
+<tr>
+<td> <span class="caps">IRQ</span> </td>
+		<td> PC3 </td>
+	</tr>
+<tr>
+<td> <span class="caps">MISO</span> </td>
+		<td> PB4 </td>
+	</tr>
+<tr>
+<td> <span class="caps">MOSI</span> </td>
+		<td> PB5 </td>
+	</tr>
+<tr>
+<td> <span class="caps">SCK</span> </td>
+		<td> PB3 </td>
+	</tr>
+<tr>
+<td> <span class="caps">CSN</span> </td>
+		<td> PC1 </td>
+	</tr>
+<tr>
+<td> CE </td>
+		<td> PC2 </td>
+	</tr>
+<tr>
+<td> <span class="caps">VCC</span> </td>
+		<td> 3V </td>
+	</tr>
+</table><h2>SPI3 Initialization and associated pin setup.</h2>
+<p>You will need to create driver files ds_nordic.c/h. This driver will contain an initialization function along with a low level spi send/receive function.</p>
+<h3><strong>void ds_nordic_init(void)</strong></h3>
+<p>You will need to initialize SPI3 with similar parameters that were used for SPI2 in lab6. Do not forget to also initialize <span class="caps">CSN</span> and CE as outputs and <span class="caps">IRQ</span> as an input.</p>
+<h3><strong>uint8_t ds_nordic_send_spi_byte(uint8_t data)</strong></h3>
+<p>This function is used to send and receive bytes from the nordic chip. The nRF24L01+ has been tailored to expect the name of this function to be ds_nordic_send_spi_byte.</p>
+<pre><code>uint8_t ds_nordic_send_spi_byte(uint8_t data) {
+  SPI_SendData8(SPI3,data);
+  while(SPI_I2S_GetFlagStatus(SPI3,SPI_I2S_FLAG_RXNE) == RESET);
+  return SPI_ReceiveData8(SPI3);      
+}</code></pre>
+<h2>Delay Function</h2>
+<p>Make sure to initialize your ds_delay_uS() function from Lab 6.</p>
+<h2>Transmitting and Receiving</h2>
+<p>Once the system is initialized, you will be ready to send and receive from system. The library functions contained in nrf24l01.c/h will be used to provide this functionality. The comments on this code are helpful. However, you may also want to pull the LPC2148 examples from <a href="http://www.diyembedded.com/">http://www.diyembedded.com</a> . The code is helpful as a reference but is not directly applicable. However, the tutorial documents are very helpful - especially Tutorials 0, 1, and 2.</p>
+<p>For the purposes of this lab, you are going to be sending 32 byte packets to a single base station provided in the room. This base station will receive the packet, upcase any characters between ‘a'-‘z', and then return the packet to you. It should be noted that everyone in the class will be transmitting on the same channel and transceiver pipe so you may get contention or a message sent from another team. In a final system, separate channels would be used along with potentially separate pipes (See MultiCeiver in the datasheet).</p>
+<h3>Library Initialization: <strong>nrf24l01_initialize_debug(bool rx, unsigned char p0_payload_width, bool enable_auto_ack)</strong>
+</h3>
+<p>This function provides a default minimum configuration for the tranceiver. This will be called after the low level initialization functions that you created earlier.</p>
+<ul>
+<li>bool rx = false: Sets up the initial state of the tranceiver (true=receive, false-transmit). This will be changed dynamically in later steps.</li>
+	<li>unsigned char p0_payload_width: This can range from 1-32.</li>
+	<li>bool enable_auto_ack: This has the capability to turn on the auto acknowledge capability.</li>
+</ul><pre><code>nrf24l01_initialize_debug(false, 32, true);</code></pre>
+<h3>Clear queues and interrupts: <strong>nrf24l01_clear_flush()</strong>
+</h3>
+<p>Purge any lingering data in the transceiver queues along with any pending interrupts.</p>
+<h3>Create payload data:</h3>
+<p>This can be any 32 byte data. The base station will make the lower case characters into upper case when they are sent back.</p>
+<h3>Send the data:</h3>
+<p>Transmit the data and poll to confirm that the transmission is complete.</p>
+<pre><code>nrf24l01_write_tx_payload(txdata, 32, true);      
+while(!(nrf24l01_irq_pin_active() &amp;&amp; (nrf24l01_irq_tx_ds_active() || nrf24l01_irq_max_rt_active()))); </code></pre>
+<h3>Confirm that the packet was acknowledged:</h3>
+<p>If the packet is not acknowledged, the transceiver will time out. In the case of this lab, we will print out a message. In a more realistic system, this case would need to be handled as losing packets is a relatively common occurrence with wireless networks.</p>
+<pre><code>if (!nrf24l01_irq_max_rt_active()) {
+  nrf24l01_irq_clear_all();
+  nrf24l01_set_as_rx(true);
+}
+else {
+  nrf24l01_flush_tx(); //get the unsent character out of the TX FIFO
+  nrf24l01_irq_clear_all(); //clear all interrupts
+  printf("Node: Failed to send %c\n",data);
+} </code></pre>
+<h3>Listen for the response from the base station</h3>
+<p>An STM32 board has been provided in the lab. It will reflect packets that are received back with the characters changed to be upper case. In the previous, step notice that the transceiver was put into receive mode once the packet had been acknowledged. This might be curious given that the acknowledgement required the transceiver to be in receive mode. The reason is that the protocol engine that does the handshaking takes control of the transmitter and receiver and does not require any additional programmatic steps.</p>
+<p>This being said, once we have received the acknowledgement from the base station, the transmitter will be put in receive mode to capture the modified packet.</p>
+<pre><code>while(!(nrf24l01_irq_pin_active() &amp;&amp; nrf24l01_irq_rx_dr_active()));
+nrf24l01_read_rx_payload(rxdata, 32);
+nrf24l01_irq_clear_all();</code></pre>
+<h3>Transition back to transmit mode:</h3>
+<p>When transitioning to transmit mode right after a reception, a minimum of 130uS is required by the receiver. You can use the delay function prior to setting the transceiver back to transmit.</p>
+<pre><code>ds_delay_uS(130);
+nrf24l01_set_as_tx();</code></pre>
+<p>If all went well, you will have setup a wireless connection to the base station. Because of the contention issue, please do not send packets any more often than one per second.</p>
+<h2>Assignment</h2>
+<ul>
+<li>Demonstrate that your solution communicates with the base station.</li>
+</ul><h2>What to Turn in:</h2>
+<p>This assignment is due by midnight on <b>3/7</b>. At midnight, your AI will pull the current state of your repository to review your code. In the following lab session, you will be asked to demonstrate your solution. Independently, you will also write a lab report describing in approximately 300 words or less the following:</p>
+<ul>
+<li>Description of your solution.</li>
+	<li>Description of issues that you encountered in developing your solution.</li>
+	<li>Timeline with milestones for your project</li>
+</ul><p>You will turn in this lab report in the oncourse assignments section.</p>
+    </div>
+  </div>
+  </div>
+
+</div>
+<div id="gollum-footer">
+  <p id="last-edit">
+    Last edited by bhimebau, <time class="js-relative-date" datetime="2013-02-26T16:12:43-05:00" title="2013-02-26 16:12:43">February 26, 2013</time>
+  </p>
+</body>
+
+<!-- Mirrored from courses.enriqueareyan.com/files/computer-science/P542 Hardware System Design II/Labs/Lab7.html by HTTrack Website Copier/3.x [XR&CO'2014], Sun, 12 Jan 2020 03:55:23 GMT -->
+</html>    
