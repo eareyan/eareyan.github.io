@@ -41,3 +41,7 @@ li::marker {
     float: left;
     max-width: 48;
 }
+
+#menu a {
+    padding: 0.25em;
+}
