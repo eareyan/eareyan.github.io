@@ -25,9 +25,16 @@ ul {
 }
 
 li {
-    padding: 0.5em;
+    padding: 1.0em;
+
 }
 li::marker {
   content: counter(list-item) "› ";
   color: slategray;
+}
+
+.icon{
+    padding-right: 20;
+    float: left;
+    max-width: 48;
 }
