@@ -1,20 +1,15 @@
-@import url('https://fonts.googleapis.com/css?family=KoHo');
 body {
-    font-family: KoHo; # ?
-    # font-family: Hahmlet; # Maybe
-    # font-family: Doto; # Maybe?
-    # font-family: monospace, sans-serif; # Maybe
-    # font-family: Noto Serif; # NO
-    # font-family: Ubuntu; # NO
-    # font-family: Short Stack; # DNE
-    # font-family: Barriecito; # DNE
-    # letter-spacing: 0.01rem;
+    font-family: Gotu;
     max-width: 60%;
     margin: auto;
     margin-top:2em;
     background-color: #fcfcfa;
     font-size: 1.15em;
 
+}
+h1 {
+    font-weight: bolder;
+    font-size: 250%;
 }
 
 p {
